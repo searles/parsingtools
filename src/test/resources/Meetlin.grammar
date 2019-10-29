@@ -1,0 +1,83 @@
+{{{package test;
+
+import at.searles.lexer.Lexer
+import at.searles.lexer.SkipTokenizer
+import at.searles.parsing.Mapping
+import at.searles.parsing.Parser
+import at.searles.parsing.Reducer
+import at.searles.parsing.Ref
+import at.searles.parsing.tools.generator.Context
+import at.searles.regex.CharSet
+}}}
+
+grammar Meetlin {
+{{{
+    private val tokenizer = SkipTokenizer(Lexer())
+    private val context = Context(tokenizer)
+}}}
+
+    regex ws: [ \n\r\t]+ ;
+    regex slComment: ('/*' .* '*/')! ;
+    regex mlomment: '//' ([^\n] | [^\r])* ;
+
+{{{    init {
+        tokenizer.addSkipped(ws.tokenId)
+        tokenizer.addSkipped(slComment.tokenId)
+        tokenizer.addSkipped(mlomment.tokenId)
+    }
+}}}
+
+    fragment intRex = [0-9]{1,8} ;
+    fragment hexRex = [0-9A-Fa-f]{1,8} ;
+    fragment decimals = '.'[0-9]* ;
+    fragment exponent = [eE]'-'?[0-9]+ ;
+    fragment realRex = [0-9]+(decimals | exponent | decimals exponent) ;
+    fragment identifierRex = [a-zA-Z_][a-zA-Z0-9_]* ;
+    fragment stringRex = ('"' ([^\\"] | '\\'. )* '"') ;
+
+    intNum: regex(intRex, `Mappings.toInt`) ;
+    realNum: regex(realRex, `Mappings.toReal`) ;
+    hexNum: regex(hexRex, `Mappings.toHex`) ;
+    str: regex(stringRex, `Mappings.toEscString`) ;
+    identifier: regex(identifierRex, `Mappings.toIdString`) ;
+
+    intNode: (intNum | hexNum) `Mappings.toIntNode` ;
+    realNode: realNum `Mappings.toRealNode` ;
+    stringNode: string `Mappings.toStringNode` ;
+    idNode: identifier `Mappings.toIdNode` ;
+
+    exprList: `Mappings.emptyList` `comma.join(expr.fold(Mappings.append))` ;
+
+    comma: ',' ;
+    vectorNode: '[' exprList `Mappings.toVectorNode` ']' ;
+
+    atom: intNode@`Annotations.Num`
+        | realNode@`Annotations.Num`
+        | stringNode@`Annotations.String`
+        | idNode@`Annotations.Ident`
+        | vectorNode
+        | '(' expr ')' ;
+
+    qualified: atom ('.' atom >> `Mappings.toQualified`)* ;
+
+    arguments: '(' exprList ')' (app >> `Mappings.listToApp`)? | app `Mappings.toSingleton` ;
+
+    app<SyntaxNode>: qualified (arguments >> `Mappings.toApp`)? ; // recursive because of eg "sin cos x"
+
+    ifExpr<SyntaxNode>: 'if' @`Annotations.Keyword` `Mappings.builder`
+                        '(' expr >> `Mappings.set("condition")` ')'
+                        expr >> `Mappings.set("thenBranch")`
+                        'else' expr >> `Mappings.set("elseBranch")`
+                        `Mapping.toIf`;
+
+    term: app | ifExpr | block ;
+
+    literal<SyntaxNode>: '-' literal `Mappings.toNeg`
+                       | '/' literal `Mappings.toRecip`
+                       | literal
+                       ;
+
+    cplxCons: literal (':' literal >> 'Mappings.toCplx')? ;
+
+
+}
