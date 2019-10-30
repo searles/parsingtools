@@ -1,7 +1,9 @@
 package at.searles.parsing.tools.generator
 
 import at.searles.lexer.Tokenizer
+import at.searles.parsing.Mapping
 import at.searles.parsing.Parser
+import at.searles.parsing.ParserStream
 import at.searles.parsing.Recognizer
 import at.searles.parsing.tokens.TokenParser
 import at.searles.regex.Regex
@@ -13,7 +15,19 @@ class Context(val tokenizer: Tokenizer) {
     }
 
     fun <T> parser(regex: Regex, fn: (CharSequence) -> T): Parser<T> {
-        return Parser.fromRegex(regex, tokenizer, true, { _, seq -> fn(seq) })
+        return Parser.fromRegex(regex, tokenizer, true, object: Mapping<CharSequence, T> {
+            override fun parse(stream: ParserStream, left: CharSequence): T {
+                return fn(left)
+            }
+
+            override fun left(result: T): CharSequence? {
+                return result.toString()
+            }
+        })
+    }
+
+    fun <T> parser(regex: Regex, fn: Mapping<CharSequence, T>): Parser<T> {
+        return Parser.fromRegex(regex, tokenizer, true, fn)
     }
 
     fun text(text: String): Recognizer {

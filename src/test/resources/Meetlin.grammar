@@ -1,5 +1,6 @@
 {{{package test;
 
+import SyntaxNode
 import at.searles.lexer.Lexer
 import at.searles.lexer.SkipTokenizer
 import at.searles.parsing.Mapping
@@ -8,6 +9,8 @@ import at.searles.parsing.Reducer
 import at.searles.parsing.Ref
 import at.searles.parsing.tools.generator.Context
 import at.searles.regex.CharSet
+import at.searles.regex.Regex
+
 }}}
 
 grammar Meetlin {
@@ -16,68 +19,133 @@ grammar Meetlin {
     private val context = Context(tokenizer)
 }}}
 
-    regex ws: [ \n\r\t]+ ;
+    regex ws: [\x09\x0b\r \xa0\u1680\u2000-\u200a\u202f\u205f\u3000]+ ;
+	regex nl: "\r\n" | "\n" | "\x0c" | "\x85" | "\u2028" | "\u2029" ; // keep newlines separated for formatting.
     regex slComment: ('/*' .* '*/')! ;
-    regex mlomment: '//' ([^\n] | [^\r])* ;
+    regex mlComment: '//' ([^\n] | [^\r])* ;
 
 {{{    init {
         tokenizer.addSkipped(ws.tokenId)
+        tokenizer.addSkipped(nl.tokenId)
         tokenizer.addSkipped(slComment.tokenId)
-        tokenizer.addSkipped(mlomment.tokenId)
+        tokenizer.addSkipped(mlComment.tokenId)
     }
 }}}
 
-    fragment intRex = [0-9]{1,8} ;
-    fragment hexRex = [0-9A-Fa-f]{1,8} ;
-    fragment decimals = '.'[0-9]* ;
-    fragment exponent = [eE]'-'?[0-9]+ ;
-    fragment realRex = [0-9]+(decimals | exponent | decimals exponent) ;
-    fragment identifierRex = [a-zA-Z_][a-zA-Z0-9_]* ;
-    fragment stringRex = ('"' ([^\\"] | '\\'. )* '"') ;
+    fragment intRex: [0-9]{1,8} ;
+    fragment hexRex: [0-9A-Fa-f]{1,8} ;
+    fragment decimals: '.'[0-9]* ;
+    fragment exponent: [eE]'-'?[0-9]+ ;
+    fragment realRex: [0-9]+(decimals | exponent | decimals exponent) ;
+    fragment identifierRex: [a-zA-Z_][a-zA-Z0-9_]* ;
+    fragment stringRex: ('"' ([^\\"] | '\\'. )* '"') ;
 
-    intNum: regex(intRex, `Mappings.toInt`) ;
-    realNum: regex(realRex, `Mappings.toReal`) ;
-    hexNum: regex(hexRex, `Mappings.toHex`) ;
-    str: regex(stringRex, `Mappings.toEscString`) ;
-    identifier: regex(identifierRex, `Mappings.toIdString`) ;
+    intNum: regex(intRex, `toInt`) ;
+    realNum: regex(realRex, `toReal`) ;
+    hexNum: regex(hexRex, `toHex`) ;
+    str: regex(stringRex, `toEscString`) ;
+    identifier: regex(identifierRex, `toIdString`) ;
 
-    intNode: (intNum | hexNum) `Mappings.toIntNode` ;
-    realNode: realNum `Mappings.toRealNode` ;
-    stringNode: string `Mappings.toStringNode` ;
-    idNode: identifier `Mappings.toIdNode` ;
-
-    exprList: `Mappings.emptyList` `comma.join(expr.fold(Mappings.append))` ;
+    intNode: (intNum | hexNum) `toIntNode` ;
+    realNode: realNum `toRealNode` ;
+    stringNode: str `toStringNode` ;
+    idNode: identifier `toIdNode` ;
 
     comma: ',' ;
-    vectorNode: '[' exprList `Mappings.toVectorNode` ']' ;
+    exprList: `emptyList` `comma.join(expr.fold(append))` ;
 
-    atom: intNode@`Annotations.Num`
-        | realNode@`Annotations.Num`
-        | stringNode@`Annotations.String`
-        | idNode@`Annotations.Ident`
+    vectorNode: '[' exprList `toVectorNode` ']' ;
+
+    atom: intNode
+        | realNode
+        | stringNode
+        | idNode
         | vectorNode
         | '(' expr ')' ;
 
-    qualified: atom ('.' atom >> `Mappings.toQualified`)* ;
+    qualified: atom ('.' atom >> `toQualified`)* ;
 
-    arguments: '(' exprList ')' (app >> `Mappings.listToApp`)? | app `Mappings.toSingleton` ;
+    arguments: '(' exprList ')' (app >> `listApply`)? | app `toSingleton` ;
 
-    app<SyntaxNode>: qualified (arguments >> `Mappings.toApp`)? ; // recursive because of eg "sin cos x"
+    app<SyntaxNode>: qualified (arguments >> `toApp`)? ; // recursive because of eg "sin cos x"
 
-    ifExpr<SyntaxNode>: 'if' @`Annotations.Keyword` `Mappings.builder`
-                        '(' expr >> `Mappings.set("condition")` ')'
-                        expr >> `Mappings.set("thenBranch")`
-                        'else' expr >> `Mappings.set("elseBranch")`
-                        `Mapping.toIf`;
+    ifExpr<SyntaxNode>: 'if' `properties`
+                        '(' expr >> `set("condition")` ')'
+                        stmt >> `set("thenBranch")`
+                        (
+							'else' stmt >> `put("elseBranch")`
+								`Mapping.create(If.class, true, "condition", "thenBranch", "elseBranch")`
+							| `Mapping.create(If.class, true, "condition", "thenBranch")`
+						) ;
 
-    term: app | ifExpr | block ;
+	block: '{' stmts `toBlock` '}' ;
 
-    literal<SyntaxNode>: '-' literal `Mappings.toNeg`
-                       | '/' literal `Mappings.toRecip`
+	absExpr: '|' expr `toAbs` '|' ;
+
+    term: app | ifExpr | block | absExpr ;
+
+    literal<SyntaxNode>: ('-' `Neg` | '/' `Recip` ) literal >> `toUnary`
                        | literal
                        ;
 
-    cplxCons: literal (':' literal >> 'Mappings.toCplx')? ;
+    cplxCons: literal (':' literal >> `toBinary(CplxCons)`)? ;
 
+    pow: cplxCons ('^' cplxCons >> `toBinary(CplxCons)`)* ;
 
+    product: pow ('*' pow >> `toBinary(Mul)` | '/' pow >> `toBinary(Div)` | '%'  pow >> `toBinary(Mod)` )* ;
+
+    sum: product ('+' product >> `toBinary(Add)` | '-' product >> `toBinary(Sub)` )* ;
+
+	cmp : sum
+		( '>' sum >> `toBinary(Greater)`
+		| '>=' sum >> `toBinary(GreaterEqual)`
+		| '<=' sum >> `toBinary(LessEqual)`
+		| '<' sum >> `toBinary(Less)`
+		| '==' sum >> `toBinary(Equal)`
+		| '!=' sum >> `toBinary(NotEqual)`
+		)? ;
+
+	logicalLit: 'not' `Not` cmp `toUnary` | cmp ;
+	logicalAnd: logicalLit ('and' logicalLit >> `toBinary(And)`)* ;
+	logicalXor: logicalAnd ('xor' logicalAnd >> `toBinary(Xor)`)* ;
+	logicalOr: logicalXor ('or' logicalXor >> `toBinary(Or)`)* ;
+
+	expr<SyntaxNode>: logicalOr ;
+
+	exprstmt: expr ('=' expr >> `toBinary(Assign)`)? ;
+
+	whilestmt: 'while' `properties`
+			   '(' expr >> `put("condition")` ')'
+			   (stmt >> `put("body")`)?
+			   `create(While.class, true, "condition", body)` ;
+
+	forstmt: 'for' `properties` '(' name >> `put("name")` 'in' expr >> `put("range")` ')' stmt  >> `put("body")`
+			 `create(For.class, true, "name", "range", "body")`;
+
+	stmt<SyntaxNode>: (exprstmt | whilestmt | forstmt) ';'? ;
+
+	vardecl: 'var' `properties` name >> `put("name")`
+				(':' type >> `put("type")`)?
+				('=' expr >> `put("init")`)?
+				`create(Var.class, "name", "type", "init")` ;
+
+	argument: 'var' id (':' type >> `TypedVarArg` | `VarArg` ) | idNode ;
+	arguments: `list` `comma.join(argument.fold(append))` ;
+
+	fundecl: 'fun' `properties` name >> `put("name")`
+				'(' arguments >> `put("arguments")` ')'
+				block >> `put("body")`
+				`create(Fun.class, "name", "arguments", "body")` ;
+
+	classdecl: 'class' `properties` name >> `put("name")`
+				('(' arguments ')' | `list`) >> `put("arguments")
+				block >> `put("body")
+				`create(Clazz.class, "name", "arguments", "body")` ;
+
+	defdecl: 'def' name '=' expr ; // alias.
+
+	decl: (vardecl | fundecl | classdecl | defdecl) ';'? ;
+
+	stmts<`List<SyntaxNode>`>: `list` ((stmt | decl) >> `append`)* ;
+	program: stmts `toBlock` ;
 }

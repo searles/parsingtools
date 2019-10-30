@@ -124,9 +124,11 @@ object Generator {
     private val escContext = Context(Lexer())
 
     private fun hexDigit(ch: Char): Int {
-        if(ch <= '9') return ch - '0'
-        if(ch <= 'F') return ch - 'F'
-        return ch - 'f'
+        return when {
+            ch <= '9' -> ch - '0'
+            ch <= 'F' -> ch - 'A' + 10
+            else -> ch - 'a' + 10
+        }
     }
 
     private fun escHex(seq: CharSequence): Int {
@@ -211,8 +213,24 @@ object Generator {
     }
 
     class StringNode(info: SourceInfo, val string: String): GenNode(info) {
+        private fun mapChar(ch: Char): String {
+            return when {
+                ch == '\n' -> "\\n"
+                ch == '\r' -> "\\r"
+                ch == '\t' -> "\\t"
+                ch == '\b' -> "\\b"
+                ch == '\\' -> "\\\\"
+                ch == '"' -> "\\\""
+                ch < ' ' || ch >= 0xff.toChar() -> String.format("\\u%04x", ch.toInt())
+                else -> ch.toString()
+            }
+        }
+
         private fun javaString(): String {
-            return string // TODO
+            // FIXME move to parsing
+            val sb = StringBuilder()
+            string.forEach {sb.append(mapChar(it))}
+            return sb.toString()
         }
 
         override fun toCode(): String {
@@ -312,7 +330,7 @@ object Generator {
             .or(context.text("+").then(Mapping{stream, expr: GenNode -> Plus(stream.createSourceInfo(), expr) as GenNode } ))
             .or(context.text("?").then(Mapping{stream, expr: GenNode -> Opt(stream.createSourceInfo(), expr) as GenNode } ))
             .or(context.text("!").then(Mapping{stream, expr: GenNode -> Stop(stream.createSourceInfo(), expr) as GenNode } ))
-            .or(range.fold { stream, expr: GenNode, range -> RangeNode(stream.createSourceInfo(), expr, range) as GenNode })
+            .or(context.text("{").then(range.fold { stream, expr: GenNode, range -> RangeNode(stream.createSourceInfo(), expr, range) as GenNode }).then(context.text("}")))
     ))
 
     class FoldNode(info: SourceInfo, val expr: GenNode, val fold: GenNode): GenNode(info) {
@@ -424,7 +442,7 @@ object Generator {
     class Grammar(info: SourceInfo, val name: String, val content: List<GenNode>): GenNode(info) {
         override fun toCode(): String {
             val writer = StringBuilder()
-            writer.append("class $name {\n")
+            writer.append("object $name {\n")
 
             val predefinedRefs = content.filterIsInstance<ParserRuleNode>().map{it.lhs}.filter{it.type != null}
 
