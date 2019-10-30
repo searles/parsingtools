@@ -109,6 +109,20 @@ class GeneratorTest {
         }
     }
 
+    @Test
+    fun meelan() {
+        val input = ParserStream(TokenStream.fromCharStream(ReaderCharStream(FileReader("src/test/resources/Meelan.grammar"))))
+        val output = Generator.program.parse(input)
+
+
+        if(output is Generator.Program) {
+            val kotlinSource = output.toCode()
+            File("src/test/kotlin/Meelan.kt").writeText(kotlinSource)
+        } else {
+            Assert.fail()
+        }
+    }
+
     private fun parseExpr(): AstNode? {
         return Generator.expr.parse(parserStream)
     }

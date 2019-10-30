@@ -282,7 +282,7 @@ object Generator {
     // basic: elementary ( '*' `star` | '+' `plus` | '?' `option` | '!' `stop` | '{' range '}' `range` )* ;
     class Star(info: SourceInfo, val expr: GenNode): GenNode(info) {
         override fun toCode(): String {
-            return "Reducer.rep(${expr.toCode()})"
+            return "${expr.toCode()}.rep()"
         }
 
         override fun toRegex(): String {
@@ -292,7 +292,7 @@ object Generator {
 
     class Plus(info: SourceInfo, val expr: GenNode): GenNode(info){
         override fun toCode(): String {
-            return "Reducer.plus(${expr.toCode()})"
+            return "${expr.toCode()}.plus()"
         }
 
         override fun toRegex(): String {
@@ -303,7 +303,7 @@ object Generator {
 
     class Opt(info: SourceInfo, val expr: GenNode): GenNode(info){
         override fun toCode(): String {
-            return "Reducer.opt(${expr.toCode()})"
+            return "${expr.toCode()}.opt()"
         }
 
         override fun toRegex(): String {
@@ -442,7 +442,7 @@ object Generator {
     class Grammar(info: SourceInfo, val name: String, val content: List<GenNode>): GenNode(info) {
         override fun toCode(): String {
             val writer = StringBuilder()
-            writer.append("object $name {\n")
+            writer.append("object $name {\n").append(programHeader).append("\n\n")
 
             val predefinedRefs = content.filterIsInstance<ParserRuleNode>().map{it.lhs}.filter{it.type != null}
 
@@ -471,10 +471,37 @@ object Generator {
 
     class Program(info: SourceInfo, val header: String, val grammar: Grammar): GenNode(info) {
         override fun toCode(): String {
-            return "${header}${grammar.toCode()}"
+            return "${header.trimIndent()}\n\n${genericHeader}\n\n${grammar.toCode()}\n"
         }
     }
 
     val program = code.or(Initializer{""}).
         then(grammar.fold{ stream, header: String, body: Grammar -> Program(stream.createSourceInfo(), header, body)})
+
+    val genericHeader = """
+import at.searles.lexer.Lexer
+import at.searles.lexer.SkipTokenizer
+import at.searles.parsing.Mapping
+import at.searles.parsing.Parser
+import at.searles.parsing.Reducer
+import at.searles.parsing.Ref
+import at.searles.parsing.tools.generator.Context
+import at.searles.regex.CharSet
+import at.searles.regex.Regex""".trimIndent()
+
+    val programHeader = """
+    private val tokenizer = SkipTokenizer(Lexer())
+    private val context = Context(tokenizer)
+
+    private fun <T> Reducer<T, T>.opt(): Reducer<T, T> {
+        return Reducer.opt(this)
+    }
+
+    private fun <T> Reducer<T, T>.rep(): Reducer<T, T> {
+        return Reducer.rep(this)
+    }
+
+    private fun <T> Reducer<T, T>.plus(): Reducer<T, T> {
+        return Reducer.rep(this)
+    }"""
 }
