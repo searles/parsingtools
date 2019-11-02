@@ -2,10 +2,10 @@ import at.searles.buf.ReaderCharStream
 import at.searles.lexer.TokenStream
 import at.searles.parsing.ParserStream
 import at.searles.parsing.tools.generator.Generator
-import at.searles.parsing.utils.ast.AstNode
+import at.searles.parsing.tools.common.SyntaxInfo
+import at.searles.parsing.tools.generator.KotlinVisitor
 import org.junit.Assert
 import org.junit.Test
-import java.io.File
 import java.io.FileReader
 
 class GeneratorTest {
@@ -90,7 +90,7 @@ class GeneratorTest {
     @Test
     fun regexString() {
         val input = ParserStream.fromString("regex('a',`a`)")
-        val output = Generator.regexParser.parse(input)
+        val output = Generator.RegexParser.parse(input)
 
         Assert.assertTrue(output is Generator.RegexParserNode)
     }
@@ -102,7 +102,7 @@ class GeneratorTest {
 
 
         if(output is Generator.Program) {
-            val kotlinSource = output.toCode()
+            val kotlinSource = output.accept(KotlinVisitor())
             Assert.assertEquals("Arithmetics", output.grammar.name)
         } else {
             Assert.fail()
@@ -116,14 +116,14 @@ class GeneratorTest {
 
 
         if(output is Generator.Program) {
-            val kotlinSource = output.toCode()
-            File("src/test/kotlin/Meelan.kt").writeText(kotlinSource)
+            val kotlinSource = output.accept(KotlinVisitor())
+            // FIXME File("src/test/kotlin/Meelan.kt").writeText(kotlinSource)
         } else {
             Assert.fail()
         }
     }
 
-    private fun parseExpr(): AstNode? {
+    private fun parseExpr(): SyntaxInfo? {
         return Generator.expr.parse(parserStream)
     }
 

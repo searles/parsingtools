@@ -1,13 +1,8 @@
 package at.searles.parsing.tools.generator
 
-import at.searles.parsing.utils.ast.AstNode
-import at.searles.parsing.utils.ast.SourceInfo
+import at.searles.parsing.ParserStream
+import at.searles.parsing.tools.common.SyntaxInfo
 
-abstract class GenNode(info: SourceInfo): AstNode(info) {
-    open fun toCode(): String = errorMsg(sourceInfo())
-    open fun toRegex(): String = errorMsg(sourceInfo())
-
-    private fun errorMsg(sourceInfo: SourceInfo): String {
-        return "/* ERROR $sourceInfo */"
-    }
+abstract class GenNode(stream: ParserStream): SyntaxInfo(stream) {
+    abstract fun <A> accept(visitor: Visitor<A>): A
 }

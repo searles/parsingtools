@@ -1,6 +1,6 @@
 package meelan
 
-import at.searles.parsing.utils.ast.SourceInfo
+import at.searles.parsing.ParserStream
 
-class ClassDecl(info: SourceInfo): SyntaxNode(info) {
+class ClassDecl(stream: ParserStream): SyntaxNode(stream) {
 }

@@ -1,12 +1,21 @@
 package at.searles.parsing.tools.generator
 
 import at.searles.lexer.Tokenizer
-import at.searles.parsing.Mapping
-import at.searles.parsing.Parser
-import at.searles.parsing.ParserStream
-import at.searles.parsing.Recognizer
+import at.searles.parsing.*
 import at.searles.parsing.tokens.TokenParser
 import at.searles.regex.Regex
+
+private fun <T> Reducer<T, T>.opt(): Reducer<T, T> {
+    return Reducer.opt(this)
+}
+
+private fun <T> Reducer<T, T>.rep(): Reducer<T, T> {
+    return Reducer.rep(this)
+}
+
+private fun <T> Reducer<T, T>.plus(): Reducer<T, T> {
+    return Reducer.rep(this)
+}
 
 class Context(val tokenizer: Tokenizer) {
     fun parser(regex: Regex): TokenParser {

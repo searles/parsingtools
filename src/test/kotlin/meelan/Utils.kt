@@ -1,9 +1,10 @@
+package test.meelan
+
 import at.searles.parsing.Fold
 import at.searles.parsing.Initializer
 import at.searles.parsing.Mapping
 import at.searles.parsing.ParserStream
-import at.searles.parsing.printing.PartialConcreteSyntaxTree
-import at.searles.parsing.utils.builder.Properties
+import at.searles.parsing.tools.properties.Properties
 import meelan.Op
 import meelan.SyntaxNode
 

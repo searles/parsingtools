@@ -4,11 +4,10 @@ import meelan.*
 
 import at.searles.lexer.Lexer
 import at.searles.lexer.SkipTokenizer
-import at.searles.parsing.Mapping
-import at.searles.parsing.Parser
 import at.searles.parsing.Reducer
 import at.searles.parsing.Ref
 import at.searles.parsing.tools.generator.Context
+import test.meelan.Utils
 import at.searles.regex.CharSet
 import at.searles.regex.Regex
 
@@ -121,7 +120,8 @@ object Meelan {
     val qualified = atom.then(context.text(".").then(identifier.fold(Utils.toQualified)).rep())
 
     // position [1745:1826]
-    val arguments = context.text("(").then(exprList).then(context.text(")")).then(app.fold(Utils.listApply).opt()).or(app.then(Utils.toSingleton))
+    val arguments = context.text("(").then(exprList).then(context.text(")")).then(app.fold(Utils.listApply).opt()).or(app.then(
+        Utils.toSingleton))
 
     // position [1836:1892]
     init {
@@ -130,7 +130,10 @@ object Meelan {
 
     // position [1941:2385]
     init {
-        ifExpr.set(context.text("if").annotate(Annot.Kw).then(Utils.properties).then(context.text("(")).then(expr.fold(Utils.set("condition"))).then(context.text(")")).then(stmt.fold(Utils.set("thenBranch"))).then(context.text("else").annotate(Annot.Kw).then(stmt.fold(Utils.set("elseBranch"))).then(Utils.create(IfElse::class.java, true, "condition", "thenBranch", "elseBranch")).or(Utils.create(If::class.java, true, "condition", "thenBranch"))))
+        ifExpr.set(context.text("if").annotate(Annot.Kw).then(Utils.properties).then(context.text("(")).then(expr.fold(
+            Utils.set("condition"))).then(context.text(")")).then(stmt.fold(Utils.set("thenBranch"))).then(context.text("else").annotate(Annot.Kw).then(stmt.fold(
+            Utils.set("elseBranch"))).then(Utils.create(IfElse::class.java, true, "condition", "thenBranch", "elseBranch")).or(
+            Utils.create(If::class.java, true, "condition", "thenBranch"))))
     }
 
     // position [2392:2428]
@@ -144,7 +147,8 @@ object Meelan {
 
     // position [2536:2690]
     init {
-        literal.set(context.text("-").then(literal).then(Utils.toUnary(Op.Neg)).or(context.text("/").then(literal).then(Utils.toUnary(Op.Recip))).or(literal))
+        literal.set(context.text("-").then(literal).then(Utils.toUnary(Op.Neg)).or(context.text("/").then(literal).then(
+            Utils.toUnary(Op.Recip))).or(literal))
     }
 
     // position [2724:2781]
@@ -156,13 +160,18 @@ object Meelan {
     }
 
     // position [2861:2990]
-    val product = pow.then(context.text("*").then(pow.fold(Utils.toBinary(Op.Mul))).or(context.text("/").then(pow.fold(Utils.toBinary(Op.Div)))).or(context.text("%").then(pow.fold(Utils.toBinary(Op.Mod)))).rep())
+    val product = pow.then(context.text("*").then(pow.fold(Utils.toBinary(Op.Mul))).or(context.text("/").then(pow.fold(
+        Utils.toBinary(Op.Div)))).or(context.text("%").then(pow.fold(Utils.toBinary(Op.Mod)))).rep())
 
     // position [3000:3098]
-    val sum = product.then(context.text("+").then(product.fold(Utils.toBinary(Op.Add))).or(context.text("-").then(product.fold(Utils.toBinary(Op.Sub)))).rep())
+    val sum = product.then(context.text("+").then(product.fold(Utils.toBinary(Op.Add))).or(context.text("-").then(product.fold(
+        Utils.toBinary(Op.Sub)))).rep())
 
     // position [3105:3397]
-    val cmp = sum.then(context.text(">").then(sum.fold(Utils.toBinary(Op.Greater))).or(context.text(">=").then(sum.fold(Utils.toBinary(Op.GreaterEqual)))).or(context.text("<=").then(sum.fold(Utils.toBinary(Op.LessEqual)))).or(context.text("<").then(sum.fold(Utils.toBinary(Op.Less)))).or(context.text("==").then(sum.fold(Utils.toBinary(Op.Equal)))).or(context.text("!=").then(sum.fold(Utils.toBinary(Op.NotEqual)))).opt())
+    val cmp = sum.then(context.text(">").then(sum.fold(Utils.toBinary(Op.Greater))).or(context.text(">=").then(sum.fold(
+        Utils.toBinary(Op.GreaterEqual)))).or(context.text("<=").then(sum.fold(Utils.toBinary(Op.LessEqual)))).or(context.text("<").then(sum.fold(
+        Utils.toBinary(Op.Less)))).or(context.text("==").then(sum.fold(Utils.toBinary(Op.Equal)))).or(context.text("!=").then(sum.fold(
+        Utils.toBinary(Op.NotEqual)))).opt())
 
     // position [3404:3455]
     val logicalLit = context.text("not").then(cmp).then(Utils.toUnary(Op.Not)).or(cmp)
@@ -185,10 +194,14 @@ object Meelan {
     val exprstmt = expr.then(context.text("=").then(expr.fold(Utils.toBinary(Op.Assign))).opt())
 
     // position [3782:3986]
-    val whilestmt = context.text("while").annotate(Annot.Kw).then(Utils.properties).then(context.text("(")).then(expr.fold(Utils.set("condition"))).then(context.text(")")).then(stmt.fold(Utils.set("body")).opt()).then(Utils.create(While::class.java, true, "condition", "body"))
+    val whilestmt = context.text("while").annotate(Annot.Kw).then(Utils.properties).then(context.text("(")).then(expr.fold(
+        Utils.set("condition"))).then(context.text(")")).then(stmt.fold(Utils.set("body")).opt()).then(
+        Utils.create(While::class.java, true, "condition", "body"))
 
     // position [3993:4212]
-    val forstmt = context.text("for").annotate(Annot.Kw).then(Utils.properties).then(context.text("(")).then(identifier.fold(Utils.set("name"))).then(context.text("in")).then(expr.fold(Utils.set("range"))).then(context.text(")")).then(stmt.fold(Utils.set("body"))).then(Utils.create(For::class.java, true, "name", "range", "body"))
+    val forstmt = context.text("for").annotate(Annot.Kw).then(Utils.properties).then(context.text("(")).then(identifier.fold(
+        Utils.set("name"))).then(context.text("in")).then(expr.fold(Utils.set("range"))).then(context.text(")")).then(stmt.fold(
+        Utils.set("body"))).then(Utils.create(For::class.java, true, "name", "range", "body"))
 
     // position [4219:4274]
     init {
@@ -196,22 +209,33 @@ object Meelan {
     }
 
     // position [4281:4536]
-    val vardecl = context.text("var").annotate(Annot.DeclKw).then(Utils.properties).then(identifier.fold(Utils.set("name"))).then(context.text(":").then(identifier.fold(Utils.set("type"))).opt()).then(context.text("=").then(expr.fold(Utils.set("init"))).opt()).then(Utils.create(VarDecl::class.java, true, "name", "type", "init"))
+    val vardecl = context.text("var").annotate(Annot.DeclKw).then(Utils.properties).then(identifier.fold(
+        Utils.set("name"))).then(context.text(":").then(identifier.fold(Utils.set("type"))).opt()).then(context.text("=").then(expr.fold(
+        Utils.set("init"))).opt()).then(Utils.create(VarDecl::class.java, true, "name", "type", "init"))
 
     // position [4543:4784]
-    val parameter = context.text("var").annotate(Annot.DeclKw).then(Utils.properties).then(identifier.fold(Utils.set("name"))).then(context.text(":").then(identifier.fold(Utils.set("type"))).opt()).then(Utils.create(VarParameter::class.java, true, "name", "type")).or(idNode)
+    val parameter = context.text("var").annotate(Annot.DeclKw).then(Utils.properties).then(identifier.fold(
+        Utils.set("name"))).then(context.text(":").then(identifier.fold(Utils.set("type"))).opt()).then(
+        Utils.create(VarParameter::class.java, true, "name", "type")).or(idNode)
 
     // position [4791:4858]
     val parameters = Utils.list.then(comma.join(parameter.fold(Utils.append)))
 
     // position [4865:5113]
-    val fundecl = context.text("fun").annotate(Annot.DeclKw).then(Utils.properties).then(identifier.fold(Utils.set("name"))).then(context.text("(")).then(parameters.fold(Utils.set("parameters"))).then(context.text(")")).then(block.fold(Utils.set("body"))).then(Utils.create(FunDecl::class.java, true, "name", "parameters", "body"))
+    val fundecl = context.text("fun").annotate(Annot.DeclKw).then(Utils.properties).then(identifier.fold(
+        Utils.set("name"))).then(context.text("(")).then(parameters.fold(Utils.set("parameters"))).then(context.text(")")).then(block.fold(
+        Utils.set("body"))).then(Utils.create(FunDecl::class.java, true, "name", "parameters", "body"))
 
     // position [5120:5391]
-    val classdecl = context.text("class").annotate(Annot.DeclKw).then(Utils.properties).then(identifier.fold(Utils.set("name"))).then(context.text("(").then(parameters).then(context.text(")")).or(Utils.list).fold(Utils.set("parameters"))).then(block.fold(Utils.set("body"))).then(Utils.create(ClassDecl::class.java, true, "name", "parameters", "body"))
+    val classdecl = context.text("class").annotate(Annot.DeclKw).then(Utils.properties).then(identifier.fold(
+        Utils.set("name"))).then(context.text("(").then(parameters).then(context.text(")")).or(
+        Utils.list).fold(Utils.set("parameters"))).then(block.fold(
+        Utils.set("body"))).then(Utils.create(ClassDecl::class.java, true, "name", "parameters", "body"))
 
     // position [5398:5595]
-    val defdecl = context.text("def").annotate(Annot.DeclKw).then(Utils.properties).then(identifier.fold(Utils.set("name"))).then(context.text("=")).then(expr.fold(Utils.set("body"))).then(Utils.create(DefDecl::class.java, true, "name", "body"))
+    val defdecl = context.text("def").annotate(Annot.DeclKw).then(Utils.properties).then(identifier.fold(
+        Utils.set("name"))).then(context.text("=")).then(expr.fold(Utils.set("body"))).then(
+        Utils.create(DefDecl::class.java, true, "name", "body"))
 
     // position [5611:5663]
     val decl = vardecl.or(fundecl).or(classdecl).or(defdecl).then(context.text(";").opt())

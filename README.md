@@ -1,4 +1,8 @@
-# Parser Generator
+# Parsing Tools
+
+* [Demo of pretty-printing a syntax tree (kotlin)](src/main/java/at/searles/demo/DemoInvert.kt)
+
+## Parser Generator
 
 This parser generator creates a parser out of grammar files. These
 grammar files are simple grammars enriched with kotlin-code.

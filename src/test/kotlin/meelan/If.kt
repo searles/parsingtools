@@ -1,6 +1,6 @@
 package meelan
 
-import at.searles.parsing.utils.ast.SourceInfo
+import at.searles.parsing.ParserStream
 
-class If(info: SourceInfo): SyntaxNode(info) {
+class If(stream: ParserStream): SyntaxNode(stream) {
 }

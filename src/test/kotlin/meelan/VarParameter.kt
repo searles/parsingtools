@@ -1,6 +1,6 @@
 package meelan
 
-import at.searles.parsing.utils.ast.SourceInfo
+import at.searles.parsing.ParserStream
 
-class VarParameter(info: SourceInfo): SyntaxNode(info) {
+class VarParameter(stream: ParserStream): SyntaxNode(stream) {
 }

@@ -13,7 +13,8 @@ object Main {
         if(result == null) {
             error("Could not generate code")
         } else {
-            print(result.toCode())
+            val visitor = KotlinVisitor()
+            print(result.accept(visitor))
         }
     }
 }
