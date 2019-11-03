@@ -5,7 +5,7 @@ import at.searles.lexer.SkipTokenizer
 import at.searles.parsing.*
 import at.searles.parsingtools.common.SyntaxInfo
 import at.searles.parsingtools.common.ValueInitializer
-import at.searles.parsingtools.list.Append
+import at.searles.parsingtools.list.AddList
 import at.searles.regex.CharSet
 import at.searles.regexparser.StringToRegex
 import at.searles.regex.Regex
@@ -533,7 +533,7 @@ object Generator {
     // statements: `emptyList` (statement '>>' `append`)* ;
     val statements = EmptyList<GenNode>().then(Reducer.rep(
         statement.fold(
-            Append(0)
+            AddList(0)
         ))).ref("statements")
 
     // grammar: 'grammar' id '{' (statement* >> `grammar` ) '}' ;
