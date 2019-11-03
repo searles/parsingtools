@@ -52,9 +52,9 @@ grammar Meelan {
 
     arguments: '(' exprList ')' (app >> `test.meelan.Utils.listApply`)? | app `test.meelan.Utils.toSingleton` ;
 
-    app<SyntaxNode>: qualified (arguments >> `test.meelan.Utils.toApp`)? ; // recursive because of eg "sin cos x"
+    app<Node>: qualified (arguments >> `test.meelan.Utils.toApp`)? ; // recursive because of eg "sin cos x"
 
-    ifExpr<SyntaxNode>: 'if' @ `Annot.Kw` `test.meelan.Utils.properties`
+    ifExpr<Node>: 'if' @ `Annot.Kw` `test.meelan.Utils.properties`
                         '(' expr >> `test.meelan.Utils.set("condition")` ')'
                         stmt >> `test.meelan.Utils.set("thenBranch")`
                         (
@@ -69,14 +69,14 @@ grammar Meelan {
 
     term: app | ifExpr | block | absExpr ;
 
-    literal<SyntaxNode>: '-' literal `test.meelan.Utils.toUnary(Op.Neg)`
+    literal<Node>: '-' literal `test.meelan.Utils.toUnary(Op.Neg)`
                        | '/' literal `test.meelan.Utils.toUnary(Op.Recip)`
                        | literal
                        ;
 
     cons: literal (':' literal >> `test.meelan.Utils.toBinary(Op.Cons)`)? ;
 
-    pow<SyntaxNode>: cons ('^' pow >> `test.meelan.Utils.toBinary(Op.Pow)`)? ;
+    pow<Node>: cons ('^' pow >> `test.meelan.Utils.toBinary(Op.Pow)`)? ;
 
     product: pow ('*' pow >> `test.meelan.Utils.toBinary(Op.Mul)` | '/' pow >> `test.meelan.Utils.toBinary(Op.Div)` | '%'  pow >> `test.meelan.Utils.toBinary(Op.Mod)` )* ;
 
@@ -96,7 +96,7 @@ grammar Meelan {
 	logicalXor: logicalAnd ('xor' logicalAnd >> `test.meelan.Utils.toBinary(Op.Xor)`)* ;
 	logicalOr: logicalXor ('or' logicalXor >> `test.meelan.Utils.toBinary(Op.Or)`)* ;
 
-	expr<SyntaxNode>: logicalOr ;
+	expr<Node>: logicalOr ;
 
 	exprstmt: expr ('=' expr >> `test.meelan.Utils.toBinary(Op.Assign)`)? ;
 
@@ -108,7 +108,7 @@ grammar Meelan {
 	forstmt: 'for' @ `Annot.Kw` `test.meelan.Utils.properties` '(' identifier >> `test.meelan.Utils.set("name")` 'in' expr >> `test.meelan.Utils.set("range")` ')' stmt  >> `test.meelan.Utils.set("body")`
 			 `test.meelan.Utils.create(For::class.java, true, "name", "range", "body")`;
 
- 	stmt<SyntaxNode>: (exprstmt | whilestmt | forstmt) ';'? ;
+ 	stmt<Node>: (exprstmt | whilestmt | forstmt) ';'? ;
 
 	vardecl: 'var' @ `Annot.DeclKw` `test.meelan.Utils.properties`
 	            identifier >> `test.meelan.Utils.set("name")`
@@ -139,6 +139,6 @@ grammar Meelan {
 
 	decl: (vardecl | fundecl | classdecl | defdecl) ';'? ;
 
-	stmts<`List<SyntaxNode>`>: `test.meelan.Utils.list` ((stmt | decl) @ `Annot.Stmt` >> `test.meelan.Utils.append`)* ;
+	stmts<`List<Node>`>: `test.meelan.Utils.list` ((stmt | decl) @ `Annot.Stmt` >> `test.meelan.Utils.append`)* ;
 	program: stmts `test.meelan.Utils.toBlock` ;
 }
