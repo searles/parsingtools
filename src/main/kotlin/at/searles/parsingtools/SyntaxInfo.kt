@@ -1,4 +1,4 @@
-package at.searles.parsingtools.common
+package at.searles.parsingtools
 
 import at.searles.parsing.ParserStream
 

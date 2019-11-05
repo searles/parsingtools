@@ -8,7 +8,7 @@ import java.util.Optional
 /**
  * Created by searles on 02.04.19.
  */
-class SomeMapping<T> : Mapping<T, Optional<T>> {
+class CreateSome<T> : Mapping<T, Optional<T>> {
     override fun parse(stream: ParserStream, left: T): Optional<T>? {
         return Optional.of(left)
     }

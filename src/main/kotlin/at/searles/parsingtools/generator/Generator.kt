@@ -3,13 +3,13 @@ package at.searles.parsingtools.generator
 import at.searles.lexer.Lexer
 import at.searles.lexer.SkipTokenizer
 import at.searles.parsing.*
-import at.searles.parsingtools.common.SyntaxInfo
-import at.searles.parsingtools.common.ValueInitializer
-import at.searles.parsingtools.list.AddList
+import at.searles.parsingtools.SyntaxInfo
+import at.searles.parsingtools.common.CreateValue
+import at.searles.parsingtools.list.AddToList
 import at.searles.regex.CharSet
 import at.searles.regexparser.StringToRegex
 import at.searles.regex.Regex
-import at.searles.parsingtools.list.EmptyList
+import at.searles.parsingtools.list.CreateEmptyList
 
 /* ---------------------------------------------------------------------------------------------------------------------
 
@@ -219,10 +219,10 @@ object Generator {
     val code = context.parser(StringToRegex.parse("('{{{'.*'}}}')!")) {it.subSequence(3, it.length - 3).toString()}
         .or(context.parser(StringToRegex.parse("('`'.*'`')!")) {it.subSequence(1, it.length - 1).toString()}).ref("code")
 
-    val expr = Ref<GenNode>("expr")
-    val elementary = Ref<GenNode>("elementary")
+    val expr = Ref<VisitorNode>("expr")
+    val elementary = Ref<VisitorNode>("elementary")
 
-    class RegexParserNode(stream: ParserStream, val regex: GenNode, val fn: GenNode): GenNode(stream) {
+    class RegexParserNode(stream: ParserStream, val regex: VisitorNode, val fn: VisitorNode): VisitorNode(stream) {
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
@@ -233,21 +233,21 @@ object Generator {
         expr.then(
             context.text(",").then(
                 elementary
-            ).fold { stream, regex: GenNode, fn: GenNode -> RegexParserNode(
+            ).fold { stream, regex: VisitorNode, fn: VisitorNode -> RegexParserNode(
                 stream,
                 regex,
                 fn
-            ) as GenNode
+            ) as VisitorNode
             })
     ).then(context.text(")"))
 
-    class IdNode(stream: ParserStream, val id: String): GenNode(stream) {
+    class IdNode(stream: ParserStream, val id: String): VisitorNode(stream) {
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
     }
 
-    class StringNode(stream: ParserStream, val string: String): GenNode(stream) {
+    class StringNode(stream: ParserStream, val string: String): VisitorNode(stream) {
         private fun mapChar(ch: Char): String {
             return when {
                 ch == '\n' -> "\\n"
@@ -266,13 +266,13 @@ object Generator {
         }
     }
 
-    class CodeNode(stream: ParserStream, val code: String): GenNode(stream) {
+    class CodeNode(stream: ParserStream, val code: String): VisitorNode(stream) {
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
     }
 
-    class CharSetNode(stream: ParserStream, val set: CharSet): GenNode(stream) {
+    class CharSetNode(stream: ParserStream, val set: CharSet): VisitorNode(stream) {
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
@@ -325,73 +325,73 @@ object Generator {
         )
 
     // basic: elementary ( '*' `star` | '+' `plus` | '?' `option` | '!' `stop` | '{' range '}' `range` )* ;
-    class Star(stream: ParserStream, val expr: GenNode): GenNode(stream) {
+    class Star(stream: ParserStream, val expr: VisitorNode): VisitorNode(stream) {
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
     }
 
-    class Plus(stream: ParserStream, val expr: GenNode): GenNode(stream){
+    class Plus(stream: ParserStream, val expr: VisitorNode): VisitorNode(stream){
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
     }
 
 
-    class Opt(stream: ParserStream, val expr: GenNode): GenNode(stream){
+    class Opt(stream: ParserStream, val expr: VisitorNode): VisitorNode(stream){
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
     }
 
-    class Stop(stream: ParserStream, val expr: GenNode): GenNode(stream){
+    class Stop(stream: ParserStream, val expr: VisitorNode): VisitorNode(stream){
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
     }
 
-    class RangeNode(stream: ParserStream, val expr: GenNode, val range: Range): GenNode(stream){
+    class RangeNode(stream: ParserStream, val expr: VisitorNode, val range: Range): VisitorNode(stream){
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
     }
 
     val basic = elementary.then(Reducer.rep(
-        context.text("*").then(Mapping{ stream, expr: GenNode -> Star(
+        context.text("*").then(Mapping{ stream, expr: VisitorNode -> Star(
             stream,
             expr
-        ) as GenNode
+        ) as VisitorNode
         })
-            .or(context.text("+").then(Mapping{ stream, expr: GenNode -> Plus(
+            .or(context.text("+").then(Mapping{ stream, expr: VisitorNode -> Plus(
                 stream,
                 expr
-            ) as GenNode
+            ) as VisitorNode
             } ))
-            .or(context.text("?").then(Mapping{ stream, expr: GenNode -> Opt(
+            .or(context.text("?").then(Mapping{ stream, expr: VisitorNode -> Opt(
                 stream,
                 expr
-            ) as GenNode
+            ) as VisitorNode
             } ))
-            .or(context.text("!").then(Mapping{ stream, expr: GenNode -> Stop(
+            .or(context.text("!").then(Mapping{ stream, expr: VisitorNode -> Stop(
                 stream,
                 expr
-            ) as GenNode
+            ) as VisitorNode
             } ))
-            .or(context.text("{").then(range.fold { stream, expr: GenNode, range -> RangeNode(
+            .or(context.text("{").then(range.fold { stream, expr: VisitorNode, range -> RangeNode(
                 stream,
                 expr,
                 range
-            ) as GenNode
+            ) as VisitorNode
             }).then(context.text("}")))
     ))
 
-    class FoldNode(stream: ParserStream, val expr: GenNode, val fold: GenNode): GenNode(stream) {
+    class FoldNode(stream: ParserStream, val expr: VisitorNode, val fold: VisitorNode): VisitorNode(stream) {
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
     }
 
-    class AnnotationNode(stream: ParserStream, val expr: GenNode, val annotation: GenNode): GenNode(stream) {
+    class AnnotationNode(stream: ParserStream, val expr: VisitorNode, val annotation: VisitorNode): VisitorNode(stream) {
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
@@ -400,36 +400,36 @@ object Generator {
     //        extended: basic ('>>' elementary >> `fold` | '@' elementary >> `annotate`)* ;
 
     val extended = basic.then(Reducer.rep(
-        context.text(">>").then(elementary).fold{ stream, expr: GenNode, fold -> FoldNode(
+        context.text(">>").then(elementary).fold{ stream, expr: VisitorNode, fold -> FoldNode(
             stream,
             expr,
             fold
-        ) as GenNode
+        ) as VisitorNode
         }
-        .or(context.text("@").then(elementary).fold{ stream, expr: GenNode, annotation -> AnnotationNode(
+        .or(context.text("@").then(elementary).fold{ stream, expr: VisitorNode, annotation -> AnnotationNode(
             stream,
             expr,
             annotation
-        ) as GenNode
+        ) as VisitorNode
         })
     ))
 
     // concat: extended (extended >> `concat`)* ;
-    class ConcatNode(stream: ParserStream, val left: GenNode, val right: GenNode): GenNode(stream) {
+    class ConcatNode(stream: ParserStream, val left: VisitorNode, val right: VisitorNode): VisitorNode(stream) {
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
     }
 
-    val concat = extended.then(Reducer.rep(extended.fold{ stream, left: GenNode, right -> ConcatNode(
+    val concat = extended.then(Reducer.rep(extended.fold{ stream, left: VisitorNode, right -> ConcatNode(
         stream,
         left,
         right
-    ) as GenNode
+    ) as VisitorNode
     }))
 
     // union: concat ('|' concat >> `union` )* ;
-    class UnionNode(stream: ParserStream, val left: GenNode, val right: GenNode): GenNode(stream) {
+    class UnionNode(stream: ParserStream, val left: VisitorNode, val right: VisitorNode): VisitorNode(stream) {
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
@@ -437,11 +437,11 @@ object Generator {
 
     val union = concat.then(Reducer.rep(
         context.text("|").then(
-            concat.fold{ stream, left: GenNode, right -> UnionNode(
+            concat.fold{ stream, left: VisitorNode, right -> UnionNode(
                 stream,
                 left,
                 right
-            ) as GenNode
+            ) as VisitorNode
             })))
 
     // expr<`GenNode`>: union ;
@@ -449,7 +449,7 @@ object Generator {
         expr.set(union)
     }
 
-    class FragmentRuleNode(stream: ParserStream, val lhs: String, val rhs: GenNode): GenNode(stream) {
+    class FragmentRuleNode(stream: ParserStream, val lhs: String, val rhs: VisitorNode): VisitorNode(stream) {
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
@@ -464,10 +464,10 @@ object Generator {
                 stream,
                 id,
                 rhs
-            ) as GenNode
+            ) as VisitorNode
             })).ref("fragmentRule")
 
-    class RegexRuleNode(stream: ParserStream, val lhs: String, val rhs: GenNode): GenNode(stream) {
+    class RegexRuleNode(stream: ParserStream, val lhs: String, val rhs: VisitorNode): VisitorNode(stream) {
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
@@ -481,15 +481,15 @@ object Generator {
                 stream,
                 id,
                 rhs
-            ) as GenNode
+            ) as VisitorNode
             })).ref("regexRule")
 
-    class TypedRuleHeader(stream: ParserStream, val name: String, val type: GenNode?): SyntaxInfo(stream)
+    class TypedRuleHeader(stream: ParserStream, val name: String, val type: VisitorNode?): SyntaxInfo(stream)
 
     // typedHeader: id ('<' elementary '>' >> `typedRuleHeader` | `untypedRuleHeader`)
     val typedHeader = identifier.then(
         context.text("<").then(elementary).then(
-            context.text(">")).fold { stream, id: String, type: GenNode ->
+            context.text(">")).fold { stream, id: String, type: VisitorNode ->
             TypedRuleHeader(
                 stream,
                 id,
@@ -499,7 +499,7 @@ object Generator {
             .or(Mapping{stream, id -> TypedRuleHeader(stream, id, null) })
     ).ref("typedHeader")
 
-    class ParserRuleNode(stream: ParserStream, val lhs: TypedRuleHeader, val rhs: GenNode): GenNode(stream) {
+    class ParserRuleNode(stream: ParserStream, val lhs: TypedRuleHeader, val rhs: VisitorNode): VisitorNode(stream) {
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
@@ -513,7 +513,7 @@ object Generator {
                 stream,
                 header,
                 rhs
-            ) as GenNode
+            ) as VisitorNode
             })
 
     // rule: fragmentRule | regexRule | parserRule ;
@@ -531,13 +531,13 @@ object Generator {
         })).ref("statement")
 
     // statements: `emptyList` (statement '>>' `append`)* ;
-    val statements = EmptyList<GenNode>().then(Reducer.rep(
+    val statements = CreateEmptyList<VisitorNode>().then(Reducer.rep(
         statement.fold(
-            AddList(0)
+            AddToList(0)
         ))).ref("statements")
 
     // grammar: 'grammar' id '{' (statement* >> `grammar` ) '}' ;
-    class Grammar(stream: ParserStream, val name: String, val content: List<GenNode>): GenNode(stream) {
+    class Grammar(stream: ParserStream, val name: String, val content: List<VisitorNode>): VisitorNode(stream) {
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit((this))
         }
@@ -555,13 +555,13 @@ object Generator {
         })
         .then(context.text("}")).ref("grammar")
 
-    class Program(stream: ParserStream, val header: String, val grammar: Grammar): GenNode(stream) {
+    class Program(stream: ParserStream, val header: String, val grammar: Grammar): VisitorNode(stream) {
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
     }
 
-    val program = code.or(ValueInitializer("")).
+    val program = code.or(CreateValue("")).
         then(grammar.fold{ stream, header: String, body: Grammar ->
             Program(
                 stream,

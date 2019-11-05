@@ -3,7 +3,7 @@ package at.searles.parsingtools.common
 import at.searles.parsing.Mapping
 import at.searles.parsing.ParserStream
 
-class Increment(private val min: Int) : Mapping<Int, Int> {
+class IncrementInt(private val min: Int) : Mapping<Int, Int> {
 
     override fun parse(stream: ParserStream, left: Int): Int? {
         return left + 1

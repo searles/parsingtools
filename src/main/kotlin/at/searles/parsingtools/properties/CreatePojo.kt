@@ -5,21 +5,18 @@ import at.searles.parsing.ParserStream
 
 import java.lang.reflect.Constructor
 import java.lang.reflect.InvocationTargetException
-import java.lang.reflect.Method
 
 /**
  * Creates an object with setters and getters but without knowing
  * the parameters. No inversion thus.
  */
-class PojoCreator<T> @JvmOverloads constructor(clazz: Class<T>, withInfo: Boolean = false) : Mapping<Properties, T> {
+class CreatePojo<T> constructor(private val clazz: Class<T>, private val withInfo: Boolean = false) : Mapping<Properties, T> {
 
-    private var ctor: Constructor<T>? = null
-    private var clazz: Class<T>? = null
+    private val ctor: Constructor<T>
 
     init {
         try {
             this.ctor = if (withInfo) clazz.getConstructor(ParserStream::class.java) else clazz.getConstructor()
-            this.clazz = clazz
         } catch (e: NoSuchMethodException) {
             throw IllegalArgumentException(e)
         }
@@ -28,10 +25,10 @@ class PojoCreator<T> @JvmOverloads constructor(clazz: Class<T>, withInfo: Boolea
 
     override fun parse(stream: ParserStream, left: Properties): T? {
         try {
-            val obj = if (ctor!!.parameterCount == 0) ctor!!.newInstance() else ctor!!.newInstance(stream)
+            val obj = if (withInfo) ctor.newInstance(stream) else ctor.newInstance()
 
             for (key in left) {
-                val setter = MethodUtils.setter(clazz!!, key)
+                val setter = MethodUtils.setter(clazz, key)
                 setter.invoke(obj, left[key])
             }
 

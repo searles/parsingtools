@@ -3,14 +3,12 @@ package at.searles.parsingtools.properties
 import at.searles.parsing.Initializer
 import at.searles.parsing.ParserStream
 
-class PropertiesInitializer : Initializer<Properties> {
+object CreateEmptyProperties : Initializer<Properties> {
 
-    private object Holder {
-        internal var instance = Properties()
-    }
-
+    private val emptyProperties = Properties()
+    
     override fun parse(stream: ParserStream): Properties? {
-        return Holder.instance
+        return emptyProperties
     }
 
     override fun consume(properties: Properties): Boolean {

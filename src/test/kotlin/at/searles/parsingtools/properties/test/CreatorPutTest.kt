@@ -2,8 +2,10 @@ package at.searles.parsingtools.properties.test
 
 import at.searles.lexer.Lexer
 import at.searles.parsing.*
-import at.searles.parsingtools.Utils
 import at.searles.parsingtools.*
+import at.searles.parsingtools.properties.CreateEmptyProperties
+import at.searles.parsingtools.properties.CreateObject
+import at.searles.parsingtools.properties.CreateSingletonProperties
 import at.searles.regexparser.StringToRegex
 import org.junit.Assert
 import org.junit.Test
@@ -24,8 +26,8 @@ class CreatorPutTest {
 
     private val parser = id.then(
             Recognizer.fromString("+", tokenizer, false)
-                .then(Utils.properties<Any>("a"))
-                .then(Utils.create<Any>(Item::class.java, "a"))
+                .then(CreateSingletonProperties<Any>("a"))
+                .then(CreateObject<Any>(Item::class.java, "a"))
             .opt()
     )
     private var input: ParserStream? = null

@@ -12,13 +12,13 @@ class KotlinVisitor: Visitor<String> {
     val genericHeader = """
 import at.searles.lexer.Lexer
 import at.searles.lexer.SkipTokenizer
-import at.searles.parsing.Mapping
-import at.searles.parsing.Parser
-import at.searles.parsing.Reducer
 import at.searles.parsing.Ref
 import at.searles.parsingtools.generator.Context
+import at.searles.parsingtools.opt
+import at.searles.parsingtools.rep
 import at.searles.regex.CharSet
-import at.searles.regex.Regex""".trimIndent()
+import at.searles.regex.Regex
+""".trimIndent()
 
     val programHeader = """
     private val tokenizer = SkipTokenizer(Lexer())
@@ -170,7 +170,7 @@ import at.searles.regex.Regex""".trimIndent()
         return "context.parser($regexString, $fnString)"
     }
 
-    private fun handleError(msg: String, node: GenNode) {
+    private fun handleError(msg: String, node: VisitorNode) {
         throw IllegalArgumentException("$msg at $node")
     }
 

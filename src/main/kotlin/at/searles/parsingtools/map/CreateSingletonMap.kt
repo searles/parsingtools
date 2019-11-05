@@ -8,7 +8,7 @@ import java.util.LinkedHashMap
 /**
  * Mapping to create a map with only one element + its inverse
  */
-class SingleMap<K, V>(private val key: K) : Mapping<V, Map<K, V>> {
+class CreateSingletonMap<K, V>(private val key: K) : Mapping<V, Map<K, V>> {
 
     override fun parse(stream: ParserStream, left: V): Map<K, V>? {
         val map = LinkedHashMap<K, V>()

@@ -2,7 +2,7 @@ package at.searles.parsingtools.properties
 
 import java.lang.reflect.Method
 
-object MethodUtils {
+internal object MethodUtils {
     private fun methodAccess(prefix: String, property: String): String {
         return prefix + property.substring(0, 1).toUpperCase() + property.substring(1)
     }

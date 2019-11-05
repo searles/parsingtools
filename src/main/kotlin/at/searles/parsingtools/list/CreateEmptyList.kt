@@ -8,13 +8,13 @@ import java.util.Collections
 /**
  * Initializer that introduces an empty list
  */
-class EmptyList<T> : Initializer<List<T>> {
+class CreateEmptyList<T> : Initializer<List<T>> {
     private object Holder {
         internal var instance: List<*> = emptyList<Any>()
     }
 
     override fun parse(stream: ParserStream): List<T>? {
-
+        @Suppress("UNCHECKED_CAST")
         return Holder.instance as List<T>
     }
 

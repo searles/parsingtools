@@ -12,7 +12,7 @@ import java.util.HashMap
  * This one is for objects with getters and constructors in which
  * all elements are set.
  */
-class Creator<T>(private val clazz: Class<out T>, private val withInfo: Boolean, vararg val properties: String) :
+class CreateObject<T>(private val clazz: Class<out T>, private val withInfo: Boolean, vararg val properties: String) :
     Mapping<Properties, T> {
 
     private val ctor: Constructor<out T>

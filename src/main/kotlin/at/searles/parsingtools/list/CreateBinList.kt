@@ -8,7 +8,7 @@ import java.util.Arrays
 /**
  * Created by searles on 31.03.19.
  */
-class BinaryList<T> : Fold<T, T, List<T>> {
+class CreateBinList<T> : Fold<T, T, List<T>> {
     override fun apply(stream: ParserStream, left: T, right: T): List<T> {
         return Arrays.asList(left, right)
     }

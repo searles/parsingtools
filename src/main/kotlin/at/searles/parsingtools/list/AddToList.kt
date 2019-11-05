@@ -8,9 +8,9 @@ import at.searles.parsing.ParserStream
  *
  * @param <T>
 </T> */
-class AddList<T>(
-    private val minSize: Int // for inversion. If false, left may not be empty.
-) : Fold<List<T>, T, List<T>> {
+class AddToList<T>(private val minSize: Int) : Fold<List<T>, T, List<T>> {
+
+    constructor() : this(0)
 
     override fun apply(stream: ParserStream, left: List<T>, right: T): List<T> {
         return ImmutableList.create(left).pushBack(right)

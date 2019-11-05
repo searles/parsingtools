@@ -8,8 +8,9 @@ import at.searles.parsing.ParserStream
 import at.searles.parsing.Recognizer
 import at.searles.parsing.printing.CstPrinter
 import at.searles.parsing.printing.StringOutStream
-import at.searles.parsingtools.Utils
-import at.searles.parsingtools.common.SyntaxInfo
+import at.searles.parsingtools.SyntaxInfo
+import at.searles.parsingtools.list
+import at.searles.parsingtools.list1
 import at.searles.regexparser.StringToRegex
 import org.junit.Assert
 import org.junit.Before
@@ -174,14 +175,14 @@ class PrinterUtilTest {
 
         parser = if (hasSeparator)
             if (mayBeEmpty)
-                Utils.list(id, Recognizer.fromString(",", tokenizer, false)).then(vecMapping)
+                id.list(Recognizer.fromString(",", tokenizer, false)).then(vecMapping)
             else
-                Utils.list1(id, Recognizer.fromString(",", tokenizer, false)).then(vecMapping)
+                id.list1(Recognizer.fromString(",", tokenizer, false)).then(vecMapping)
         else
             if (mayBeEmpty)
-                Utils.list(id).then(vecMapping)
+                id.list().then(vecMapping)
             else
-                Utils.list1(id).then(vecMapping)
+                id.list1().then(vecMapping)
     }
 
     private fun initCstPrinter() {

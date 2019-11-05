@@ -5,7 +5,7 @@ import at.searles.parsing.ParserStream
 
 import java.util.HashMap
 
-class PropertiesSingleton<T>(private val id: String) : Mapping<T, Properties> {
+class CreateSingletonProperties<T>(private val id: String) : Mapping<T, Properties> {
 
     override fun parse(stream: ParserStream, left: T): Properties? {
         val map = HashMap<String, Any>()

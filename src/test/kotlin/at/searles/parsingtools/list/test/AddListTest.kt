@@ -1,7 +1,6 @@
 package at.searles.parsingtools.list.test
 
-import at.searles.parsing.Fold
-import at.searles.parsingtools.list.AddList
+import at.searles.parsingtools.list.AddToList
 import org.junit.Assert
 import org.junit.Test
 
@@ -10,7 +9,7 @@ import java.util.Arrays
 class AddListTest {
     @Test
     fun testAppendMayBeEmpty() {
-        val cons = AddList<Int>(0)
+        val cons = AddToList<Int>(0)
 
         var l: List<Int>? = Arrays.asList(1, 2)
 
@@ -28,7 +27,7 @@ class AddListTest {
 
     @Test
     fun testAppendMayNotBeEmpty() {
-        val cons = AddList<Int>(1)
+        val cons = AddToList<Int>(1)
 
         var l: List<Int>? = Arrays.asList(1, 2)
 

@@ -2,11 +2,11 @@ package at.searles.parsingtools.properties.test
 
 import at.searles.lexer.Lexer
 import at.searles.parsing.*
-import at.searles.parsing.printing.ConcreteSyntaxTree
-import at.searles.parsingtools.Utils
-import at.searles.parsingtools.properties.PojoCreator
-import at.searles.parsingtools.properties.Properties
+import at.searles.parsingtools.properties.CreatePojo
 import at.searles.parsingtools.common.ToString
+import at.searles.parsingtools.properties.CreateEmptyProperties
+import at.searles.parsingtools.properties.CreateObject
+import at.searles.parsingtools.properties.PutProperty
 import at.searles.regexparser.StringToRegex
 import org.junit.Assert
 import org.junit.Test
@@ -15,18 +15,18 @@ class CreatorTest {
 
     private val tokenizer = Lexer()
 
-    private val id = Parser.fromRegex(StringToRegex.parse("[a-z]+"), tokenizer, false, ToString())
+    private val id = Parser.fromRegex(StringToRegex.parse("[a-z]+"), tokenizer, false, ToString)
 
-    internal val propertiesParser = Utils.properties().then(
+    internal val propertiesParser = CreateEmptyProperties.then(
         Recognizer.fromString(",", tokenizer, false).join(
-            Utils.put("a", Recognizer.fromString("+", tokenizer, false).then(id))
-                .or(Utils.put("b", Recognizer.fromString("-", tokenizer, false).then(id)), true)
+            Recognizer.fromString("+", tokenizer, false).then(id).fold(PutProperty("a"))
+                .or(Recognizer.fromString("-", tokenizer, false).then(id).fold(PutProperty("b")), true)
         )
     )
 
-    internal val parser1 = propertiesParser.then(Utils.create(Item1::class.java, "a", "b"))
-    internal val parser2 = propertiesParser.then(Utils.create(Item2::class.java, true, "a", "b"))
-    internal val parser3 = propertiesParser.then(PojoCreator(Item3::class.java))
+    internal val parser1 = propertiesParser.then(CreateObject<Any>(Item1::class.java, "a", "b"))
+    internal val parser2 = propertiesParser.then(CreateObject<Any>(Item2::class.java, true, "a", "b"))
+    internal val parser3 = propertiesParser.then(CreatePojo(Item3::class.java))
 
     private var input: ParserStream? = null
     private var output: String? = null

@@ -7,7 +7,7 @@ import at.searles.utils.Pair
 /**
  * Created by searles on 02.04.19.
  */
-class PairFold<T, U> : Fold<T, U, Pair<T, U>> {
+class CreatePair<T, U> : Fold<T, U, Pair<T, U>> {
     override fun apply(stream: ParserStream, left: T, right: U): Pair<T, U> {
         return Pair(left, right)
     }

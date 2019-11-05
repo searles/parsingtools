@@ -6,7 +6,7 @@ import at.searles.lexer.SkipTokenizer
 import at.searles.lexer.TokenStream
 import at.searles.parsing.*
 import at.searles.parsing.printing.*
-import at.searles.parsingtools.common.SyntaxInfo
+import at.searles.parsingtools.SyntaxInfo
 import at.searles.regexparser.StringToRegex;
 import org.junit.Assert
 import org.junit.Before

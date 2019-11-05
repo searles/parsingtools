@@ -3,7 +3,7 @@ package at.searles.parsingtools.properties
 import at.searles.parsing.Fold
 import at.searles.parsing.ParserStream
 
-class PropertyPut<T>(private val propertyId: String) : Fold<Properties, T, Properties> {
+class PutProperty<T>(private val propertyId: String) : Fold<Properties, T, Properties> {
 
     override fun apply(stream: ParserStream, left: Properties, right: T): Properties {
         return left.concat(propertyId, right)

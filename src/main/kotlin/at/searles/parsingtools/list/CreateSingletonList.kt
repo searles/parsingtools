@@ -8,7 +8,7 @@ import java.util.ArrayList
 /**
  * Created by searles on 31.03.19.
  */
-class SingleList<T> : Mapping<T, List<T>> {
+class CreateSingletonList<T> : Mapping<T, List<T>> {
 
     override fun parse(stream: ParserStream, left: T): List<T>? {
         val l = ArrayList<T>()

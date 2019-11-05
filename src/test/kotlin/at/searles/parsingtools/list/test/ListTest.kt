@@ -2,7 +2,7 @@ package at.searles.parsingtools.list.test
 
 import at.searles.lexer.Lexer
 import at.searles.parsing.*
-import at.searles.parsingtools.Utils
+import at.searles.parsingtools.list.CreateEmptyList
 import at.searles.parsingtools.list.ImmutableList
 import at.searles.regexparser.StringToRegex
 import org.junit.Assert
@@ -62,7 +62,7 @@ class ListTest {
     private val intsPrefix = Recognizer.fromString("I", tokenizer, false)
     private val strings = stringsPrefix.then(comma.joinPlus(id.fold(add)))
     private val ints = intsPrefix.then(comma.joinPlus(num.fold(add)))
-    private val parser = Utils.empty<Any>().then(
+    private val parser = CreateEmptyList<Any>().then(
         colon.join(
             strings.or(ints)
         )

@@ -10,7 +10,7 @@ import java.util.ArrayList
  *
  * @param <E>
 </E> */
-class ImmutableList<E> : AbstractList<E> {
+internal class ImmutableList<E> : AbstractList<E> {
 
     private val list: MutableList<E>
     override val size: Int

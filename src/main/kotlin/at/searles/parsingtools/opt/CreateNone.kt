@@ -7,7 +7,7 @@ import java.util.Optional
 /**
  * Created by searles on 02.04.19.
  */
-class NoneInitializer<T> : Initializer<Optional<T>> {
+class CreateNone<T> : Initializer<Optional<T>> {
     override fun parse(stream: ParserStream): Optional<T>? {
         return Optional.empty()
     }

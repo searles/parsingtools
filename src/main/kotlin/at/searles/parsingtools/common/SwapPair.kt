@@ -4,7 +4,7 @@ import at.searles.parsing.Fold
 import at.searles.parsing.ParserStream
 import at.searles.utils.Pair
 
-class SwapPairFold<T, U> : Fold<T, U, Pair<U, T>> {
+class SwapPair<T, U> : Fold<T, U, Pair<U, T>> {
     override fun apply(stream: ParserStream, left: T, right: U): Pair<U, T> {
         return Pair(right, left)
     }

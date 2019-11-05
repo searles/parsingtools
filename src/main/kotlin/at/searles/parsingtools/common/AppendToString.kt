@@ -6,7 +6,7 @@ import at.searles.parsing.ParserStream
 /**
  * Append codePoint to String.
  */
-class StringAppend : Fold<String, Int, String> {
+class AppendToString : Fold<String, Int, String> {
     override fun apply(stream: ParserStream, left: String, right: Int): String {
         return left + String(Character.toChars(right))
     }
