@@ -31,14 +31,12 @@ fun <T> Reducer<T, T>.plus(): Reducer<T, T> {
  * @return An invertible parser for a list of items.
 </T> */
 fun <T> Parser<T>.list1(separator: Recognizer): Parser<List<T>> {
-    // XXX there is also joinPlus!
     return this.then(CreateSingletonList()).then(
         separator.then(this.fold(AddToList(1))).rep()
     )
 }
 
 fun <T> Parser<T>.list1(): Parser<List<T>> {
-    // XXX there is also joinPlus.
     return this.then(CreateSingletonList()).then(
         this.fold(AddToList(1)).rep()
     )
@@ -54,4 +52,8 @@ fun <T> Parser<T>.list(): Parser<List<T>> {
 
 fun <T> Parser<T>.optional(): Parser<Optional<T>> {
     return this.then(CreateSome()).or(CreateNone())
+}
+
+fun <T> Reducer<T, T>.or(recognizer: Recognizer): Reducer<T, T> {
+    return Reducer.or(this, recognizer)
 }
