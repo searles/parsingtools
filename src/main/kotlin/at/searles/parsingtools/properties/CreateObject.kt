@@ -2,6 +2,7 @@ package at.searles.parsingtools.properties
 
 import at.searles.parsing.Mapping
 import at.searles.parsing.ParserStream
+import at.searles.parsing.Trace
 
 import java.lang.reflect.Constructor
 import java.lang.reflect.InvocationTargetException
@@ -12,7 +13,7 @@ import java.util.HashMap
  * This one is for objects with getters and constructors in which
  * all elements are set.
  */
-class CreateObject<T>(private val clazz: Class<out T>, private val withInfo: Boolean, vararg val properties: String) :
+class CreateObject<T>(private val clazz: Class<out T>, private val withTrace: Boolean, vararg val properties: String) :
     Mapping<Properties, T> {
 
     private val ctor: Constructor<out T>
@@ -20,13 +21,13 @@ class CreateObject<T>(private val clazz: Class<out T>, private val withInfo: Boo
 
     init {
         getters = HashMap()
-        val parameterTypes = arrayOfNulls<Class<*>>(properties.size + if (withInfo) 1 else 0)
+        val parameterTypes = arrayOfNulls<Class<*>>(properties.size + if (withTrace) 1 else 0)
 
         try {
             var index = 0
 
-            if (withInfo) {
-                parameterTypes[index++] = ParserStream::class.java
+            if (withTrace) {
+                parameterTypes[index++] = Trace::class.java
             }
 
             for (property in properties) {
@@ -45,11 +46,11 @@ class CreateObject<T>(private val clazz: Class<out T>, private val withInfo: Boo
     constructor(clazz: Class<out T>, vararg properties: String) : this(clazz, false, *properties)
 
     override fun parse(stream: ParserStream, left: Properties): T? {
-        val arguments = arrayOfNulls<Any>(properties.size + if (withInfo) 1 else 0)
+        val arguments = arrayOfNulls<Any>(properties.size + if (withTrace) 1 else 0)
         var index = 0
 
-        if (withInfo) {
-            arguments[index++] = stream
+        if (withTrace) {
+            arguments[index++] = stream.createTrace()
         }
 
         for (property in properties) {

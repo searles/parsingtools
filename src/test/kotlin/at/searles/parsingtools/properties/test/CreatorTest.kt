@@ -131,7 +131,7 @@ class CreatorTest {
 
     class Item1(val a: String?, val b: String?)
 
-    class Item2(stream: ParserStream, val a: String?, val b: String?)
+    class Item2(trace: Trace, val a: String?, val b: String?)
 
     class Item3 {
         var a: String? = null
