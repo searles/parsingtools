@@ -2,8 +2,8 @@ import at.searles.buf.ReaderCharStream
 import at.searles.lexer.TokenStream
 import at.searles.parsing.ParserStream
 import at.searles.parsingtools.generator.Generator
-import at.searles.parsingtools.SyntaxInfo
 import at.searles.parsingtools.generator.KotlinVisitor
+import at.searles.parsingtools.generator.VisitorNode
 import org.junit.Assert
 import org.junit.Test
 import java.io.FileReader
@@ -124,7 +124,7 @@ class GeneratorTest {
         }
     }
 
-    private fun parseExpr(): SyntaxInfo? {
+    private fun parseExpr(): VisitorNode? {
         return Generator.expr.parse(parserStream)
     }
 

@@ -7,9 +7,9 @@ class KotlinVisitor: Visitor<String> {
 
     private var isRegex = false
 
-    val disclaimer = "/* This file is generated */\n"
+    private val disclaimer = "/* This file is generated */\n"
 
-    val genericHeader = """
+    private val genericHeader = """
 import at.searles.lexer.Lexer
 import at.searles.lexer.SkipTokenizer
 import at.searles.parsing.Ref
@@ -20,7 +20,7 @@ import at.searles.regex.CharSet
 import at.searles.regex.Regex
 """.trimIndent()
 
-    val programHeader = """
+    private val programHeader = """
     private val tokenizer = SkipTokenizer(Lexer())
     private val context = Context(tokenizer)
     """
@@ -48,7 +48,7 @@ import at.searles.regex.Regex
         }
 
         node.content.forEach {
-            writer.append("    // position ${it.start}-${it.end}\n")
+            writer.append("    // position ${it.trace.start}-${it.trace.end}\n")
             writer.append(it.accept(this))
             writer.append("\n\n")
         }

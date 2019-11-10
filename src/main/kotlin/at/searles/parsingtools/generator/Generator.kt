@@ -3,7 +3,6 @@ package at.searles.parsingtools.generator
 import at.searles.lexer.Lexer
 import at.searles.lexer.SkipTokenizer
 import at.searles.parsing.*
-import at.searles.parsingtools.SyntaxInfo
 import at.searles.parsingtools.common.CreateValue
 import at.searles.parsingtools.list.AddToList
 import at.searles.regex.CharSet
@@ -222,7 +221,7 @@ object Generator {
     val expr = Ref<VisitorNode>("expr")
     val elementary = Ref<VisitorNode>("elementary")
 
-    class RegexParserNode(stream: ParserStream, val regex: VisitorNode, val fn: VisitorNode): VisitorNode(stream) {
+    class RegexParserNode(stream: ParserStream, val regex: VisitorNode, val fn: VisitorNode): VisitorNode(stream.createTrace()) {
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
@@ -241,13 +240,13 @@ object Generator {
             })
     ).then(context.text(")"))
 
-    class IdNode(stream: ParserStream, val id: String): VisitorNode(stream) {
+    class IdNode(stream: ParserStream, val id: String): VisitorNode(stream.createTrace()) {
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
     }
 
-    class StringNode(stream: ParserStream, val string: String): VisitorNode(stream) {
+    class StringNode(stream: ParserStream, val string: String): VisitorNode(stream.createTrace()) {
         private fun mapChar(ch: Char): String {
             return when {
                 ch == '\n' -> "\\n"
@@ -266,13 +265,13 @@ object Generator {
         }
     }
 
-    class CodeNode(stream: ParserStream, val code: String): VisitorNode(stream) {
+    class CodeNode(stream: ParserStream, val code: String): VisitorNode(stream.createTrace()) {
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
     }
 
-    class CharSetNode(stream: ParserStream, val set: CharSet): VisitorNode(stream) {
+    class CharSetNode(stream: ParserStream, val set: CharSet): VisitorNode(stream.createTrace()) {
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
@@ -325,32 +324,32 @@ object Generator {
         )
 
     // basic: elementary ( '*' `star` | '+' `plus` | '?' `option` | '!' `stop` | '{' range '}' `range` )* ;
-    class Star(stream: ParserStream, val expr: VisitorNode): VisitorNode(stream) {
+    class Star(stream: ParserStream, val expr: VisitorNode): VisitorNode(stream.createTrace()) {
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
     }
 
-    class Plus(stream: ParserStream, val expr: VisitorNode): VisitorNode(stream){
+    class Plus(stream: ParserStream, val expr: VisitorNode): VisitorNode(stream.createTrace()){
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
     }
 
 
-    class Opt(stream: ParserStream, val expr: VisitorNode): VisitorNode(stream){
+    class Opt(stream: ParserStream, val expr: VisitorNode): VisitorNode(stream.createTrace()){
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
     }
 
-    class Stop(stream: ParserStream, val expr: VisitorNode): VisitorNode(stream){
+    class Stop(stream: ParserStream, val expr: VisitorNode): VisitorNode(stream.createTrace()){
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
     }
 
-    class RangeNode(stream: ParserStream, val expr: VisitorNode, val range: Range): VisitorNode(stream){
+    class RangeNode(stream: ParserStream, val expr: VisitorNode, val range: Range): VisitorNode(stream.createTrace()){
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
@@ -385,13 +384,13 @@ object Generator {
             }).then(context.text("}")))
     ))
 
-    class FoldNode(stream: ParserStream, val expr: VisitorNode, val fold: VisitorNode): VisitorNode(stream) {
+    class FoldNode(stream: ParserStream, val expr: VisitorNode, val fold: VisitorNode): VisitorNode(stream.createTrace()) {
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
     }
 
-    class AnnotationNode(stream: ParserStream, val expr: VisitorNode, val annotation: VisitorNode): VisitorNode(stream) {
+    class AnnotationNode(stream: ParserStream, val expr: VisitorNode, val annotation: VisitorNode): VisitorNode(stream.createTrace()) {
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
@@ -415,7 +414,7 @@ object Generator {
     ))
 
     // concat: extended (extended >> `concat`)* ;
-    class ConcatNode(stream: ParserStream, val left: VisitorNode, val right: VisitorNode): VisitorNode(stream) {
+    class ConcatNode(stream: ParserStream, val left: VisitorNode, val right: VisitorNode): VisitorNode(stream.createTrace()) {
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
@@ -429,7 +428,7 @@ object Generator {
     }))
 
     // union: concat ('|' concat >> `union` )* ;
-    class UnionNode(stream: ParserStream, val left: VisitorNode, val right: VisitorNode): VisitorNode(stream) {
+    class UnionNode(stream: ParserStream, val left: VisitorNode, val right: VisitorNode): VisitorNode(stream.createTrace()) {
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
@@ -449,7 +448,7 @@ object Generator {
         expr.set(union)
     }
 
-    class FragmentRuleNode(stream: ParserStream, val lhs: String, val rhs: VisitorNode): VisitorNode(stream) {
+    class FragmentRuleNode(stream: ParserStream, val lhs: String, val rhs: VisitorNode): VisitorNode(stream.createTrace()) {
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
@@ -467,7 +466,7 @@ object Generator {
             ) as VisitorNode
             })).ref("fragmentRule")
 
-    class RegexRuleNode(stream: ParserStream, val lhs: String, val rhs: VisitorNode): VisitorNode(stream) {
+    class RegexRuleNode(stream: ParserStream, val lhs: String, val rhs: VisitorNode): VisitorNode(stream.createTrace()) {
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
@@ -484,22 +483,22 @@ object Generator {
             ) as VisitorNode
             })).ref("regexRule")
 
-    class TypedRuleHeader(stream: ParserStream, val name: String, val type: VisitorNode?): SyntaxInfo(stream)
+    class TypedRuleHeader(val trace: Trace, val name: String, val type: VisitorNode?)
 
     // typedHeader: id ('<' elementary '>' >> `typedRuleHeader` | `untypedRuleHeader`)
     val typedHeader = identifier.then(
         context.text("<").then(elementary).then(
             context.text(">")).fold { stream, id: String, type: VisitorNode ->
             TypedRuleHeader(
-                stream,
+                stream.createTrace(),
                 id,
                 type
             )
         }
-            .or(Mapping{stream, id -> TypedRuleHeader(stream, id, null) })
+            .or(Mapping{stream, id -> TypedRuleHeader(stream.createTrace(), id, null) })
     ).ref("typedHeader")
 
-    class ParserRuleNode(stream: ParserStream, val lhs: TypedRuleHeader, val rhs: VisitorNode): VisitorNode(stream) {
+    class ParserRuleNode(stream: ParserStream, val lhs: TypedRuleHeader, val rhs: VisitorNode): VisitorNode(stream.createTrace()) {
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }
@@ -537,7 +536,7 @@ object Generator {
         ))).ref("statements")
 
     // grammar: 'grammar' id '{' (statement* >> `grammar` ) '}' ;
-    class Grammar(stream: ParserStream, val name: String, val content: List<VisitorNode>): VisitorNode(stream) {
+    class Grammar(stream: ParserStream, val name: String, val content: List<VisitorNode>): VisitorNode(stream.createTrace()) {
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit((this))
         }
@@ -555,7 +554,7 @@ object Generator {
         })
         .then(context.text("}")).ref("grammar")
 
-    class Program(stream: ParserStream, val header: String, val grammar: Grammar): VisitorNode(stream) {
+    class Program(stream: ParserStream, val header: String, val grammar: Grammar): VisitorNode(stream.createTrace()) {
         override fun <A> accept(visitor: Visitor<A>): A {
             return visitor.visit(this)
         }

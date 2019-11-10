@@ -2,13 +2,9 @@ package at.searles.parsingtools.printer.test
 
 import at.searles.lexer.Lexer
 import at.searles.lexer.SkipTokenizer
-import at.searles.parsing.Mapping
-import at.searles.parsing.Parser
-import at.searles.parsing.ParserStream
-import at.searles.parsing.Recognizer
+import at.searles.parsing.*
 import at.searles.parsing.printing.CstPrinter
 import at.searles.parsing.printing.StringOutStream
-import at.searles.parsingtools.SyntaxInfo
 import at.searles.parsingtools.list
 import at.searles.parsingtools.list1
 import at.searles.regexparser.StringToRegex
@@ -141,8 +137,8 @@ class PrinterUtilTest {
     private var whiteSpaceTokId: Int = Integer.MIN_VALUE // invalid default value.
     private lateinit var outStream: StringOutStream
     private lateinit var stream: ParserStream
-    private lateinit var parser: Parser<SyntaxInfo>
-    private var ast: SyntaxInfo? = null
+    private lateinit var parser: Parser<Node>
+    private var ast: Node? = null
     private var output: String? = null
 
     private lateinit var cstPrinter: CstPrinter
@@ -153,20 +149,20 @@ class PrinterUtilTest {
         whiteSpaceTokId = tokenizer.add(StringToRegex.parse("[ \n\r\t]+"))
         tokenizer.addSkipped(whiteSpaceTokId)
 
-        val idMapping = object : Mapping<CharSequence, SyntaxInfo> {
-            override fun parse(stream: ParserStream, left: CharSequence): SyntaxInfo =
-                IdNode(stream, left.toString())
+        val idMapping = object : Mapping<CharSequence, Node> {
+            override fun parse(stream: ParserStream, left: CharSequence): Node =
+                IdNode(stream.createTrace(), left.toString())
 
-            override fun left(result: SyntaxInfo): CharSequence? =
+            override fun left(result: Node): CharSequence? =
                     if (result is IdNode) result.value else null
         }
 
-        val vecMapping = object: Mapping<List<SyntaxInfo>, SyntaxInfo> {
-            override fun parse(stream: ParserStream, left: List<SyntaxInfo>): SyntaxInfo {
-                return VecNode(stream, left)
+        val vecMapping = object: Mapping<List<Node>, Node> {
+            override fun parse(stream: ParserStream, left: List<Node>): Node {
+                return VecNode(stream.createTrace(), left)
             }
 
-            override fun left(result: SyntaxInfo): List<SyntaxInfo>? {
+            override fun left(result: Node): List<Node>? {
                 return if (result is VecNode) result.left else null
             }
         }
@@ -190,6 +186,7 @@ class PrinterUtilTest {
         this.cstPrinter = CstPrinter(outStream)
     }
 
-    class IdNode(stream: ParserStream, val value: String) : SyntaxInfo(stream)
-    class VecNode(stream: ParserStream, val left: List<SyntaxInfo>) : SyntaxInfo(stream)
+    abstract class Node(val trace: Trace)
+    class IdNode(trace: Trace, val value: String) : Node(trace)
+    class VecNode(trace: Trace, val left: List<Node>) : Node(trace)
 }
