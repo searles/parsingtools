@@ -1,6 +1,14 @@
 # Parsing Tools
 
-* [Demo of pretty-printing a syntax tree (kotlin)](src/main/java/at/searles/demo/DemoInvert.kt)
+## Various Combinators
+
+### Dealing with lists
+
+### Create Pojos and generic objects
+
+### Code Formatter
+
+
 
 ## Parser Generator
 
