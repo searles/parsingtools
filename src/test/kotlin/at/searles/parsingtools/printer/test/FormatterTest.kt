@@ -5,7 +5,7 @@ import at.searles.lexer.SkipTokenizer
 import at.searles.parsing.*
 import at.searles.parsing.printing.*
 import at.searles.parsingtools.printer.CodeFormatter
-import at.searles.parsingtools.printer.Editor
+import at.searles.parsingtools.printer.DocumentChangeObserver
 import at.searles.regexparser.StringToRegex
 import org.junit.Assert
 import org.junit.Before
@@ -105,7 +105,7 @@ class FormatterTest {
     private fun actFormat() {
         outStream = StringOutStream()
 
-        val formatter = CodeFormatter(whiteSpaceTokId, Editor.fromOutStream(outStream))
+        val formatter = CodeFormatter(whiteSpaceTokId, DocumentChangeObserver.fromOutStream(outStream))
 
         inStream.tokStream().setListener(formatter)
         inStream.setListener(formatter.createParserStreamListener(

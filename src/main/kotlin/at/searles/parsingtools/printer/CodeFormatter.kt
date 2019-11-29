@@ -7,17 +7,13 @@ import at.searles.regex.CharSet
 import at.searles.regex.Regex
 import java.lang.Integer.max
 
-class CodeFormatter(val wsTokenId: Int, val editor: Editor): TokenStream.Listener {
+class CodeFormatter(val whiteSpaceTokenId: Int, val documentChangeObserver: DocumentChangeObserver): TokenStream.Listener {
 
     private var indentLevel = 0
     private var indentNext = false
 
-    var forceNewLine = false
-    var forceSpace = false
-
-    var indentation = "    "
-    var newline = "\n"
-    var space = " "
+    private var forceNewLine = false
+    private var forceSpace = false
 
     fun forceNewLine() {
         forceNewLine = true
@@ -36,7 +32,7 @@ class CodeFormatter(val wsTokenId: Int, val editor: Editor): TokenStream.Listene
     }
 
     override fun tokenConsumed(src: TokenStream, tokId: Int, frame: Frame) {
-        if(tokId == wsTokenId) {
+        if(tokId == whiteSpaceTokenId) {
             var nlCount = countNewlines(frame)
 
             if(forceNewLine) {
@@ -49,26 +45,26 @@ class CodeFormatter(val wsTokenId: Int, val editor: Editor): TokenStream.Listene
 
             val replacement = if(nlCount == 0) if(frame.startPosition() == 0L) "" else space else newline.repeat(nlCount)
 
-            editor.edit(frame, replacement)
+            documentChangeObserver.edit(frame, replacement)
         } else {
             if(forceNewLine) {
                 forceNewLine = false
                 forceSpace = false
                 indentNext = true
-                editor.insert(newline)
+                documentChangeObserver.insert(newline)
             }
 
             if(forceSpace) {
                 forceSpace = false
-                editor.insert(space)
+                documentChangeObserver.insert(space)
             }
 
             if(indentNext) {
                 indentNext = false
-                editor.insert(indentation.repeat(indentLevel))
+                documentChangeObserver.insert(indentation.repeat(indentLevel))
             }
 
-            editor.edit(frame, frame)
+            documentChangeObserver.edit(frame, frame)
         }
     }
 
@@ -100,7 +96,11 @@ class CodeFormatter(val wsTokenId: Int, val editor: Editor): TokenStream.Listene
     }
 
     companion object {
-        val wsRegex: Regex = CharSet.chars('\r'.toInt(), '\n'.toInt(), '\t'.toInt(), ' '.toInt()) // TODO other chars.
+        val indentation = "    "
+        val newline = "\n"
+        val space = " "
+
+        val whiteSpaceRegex: Regex = CharSet.chars('\r'.toInt(), '\n'.toInt(), '\t'.toInt(), ' '.toInt()) // TODO other chars.
 
         fun countNewlines(chs: CharSequence): Int {
             // TODO others.

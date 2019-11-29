@@ -94,6 +94,6 @@ class CreateObject<T>(private val clazz: Class<out T>, private val withTrace: Bo
     }
 
     override fun toString(): String {
-        return "{create}"
+        return "{create ${clazz.name}}"
     }
 }
