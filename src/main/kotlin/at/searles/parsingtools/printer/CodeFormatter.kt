@@ -3,17 +3,22 @@ package at.searles.parsingtools.printer
 import at.searles.buf.Frame
 import at.searles.lexer.TokenStream
 import at.searles.parsing.ParserStream
-import at.searles.regex.CharSet
-import at.searles.regex.Regex
 import java.lang.Integer.max
 
-class CodeFormatter(val whiteSpaceTokenId: Int, val documentChangeObserver: DocumentChangeObserver): TokenStream.Listener {
+class CodeFormatter(private val whiteSpaceTokenId: Int, private val documentChangeObserver: DocumentChangeObserver): TokenStream.Listener {
+
+    var indentation = "    "
+    var newline = "\n"
+    var space = " "
 
     private var indentLevel = 0
     private var indentNext = false
 
     private var forceNewLine = false
     private var forceSpace = false
+
+    var position: Long = 0
+        private set
 
     fun forceNewLine() {
         forceNewLine = true
@@ -31,8 +36,14 @@ class CodeFormatter(val whiteSpaceTokenId: Int, val documentChangeObserver: Docu
         indentLevel--
     }
 
-    override fun tokenConsumed(src: TokenStream, tokId: Int, frame: Frame) {
-        if(tokId == whiteSpaceTokenId) {
+    private fun countNewlines(chs: CharSequence): Int {
+        return chs.count { it == '\n' }
+    }
+
+    override fun tokenConsumed(src: TokenStream, tokenId: Int, frame: Frame) {
+        require(position == frame.startPosition())
+
+        if(tokenId == whiteSpaceTokenId) {
             var nlCount = countNewlines(frame)
 
             if(forceNewLine) {
@@ -46,25 +57,29 @@ class CodeFormatter(val whiteSpaceTokenId: Int, val documentChangeObserver: Docu
             val replacement = if(nlCount == 0) if(frame.startPosition() == 0L) "" else space else newline.repeat(nlCount)
 
             documentChangeObserver.edit(frame, replacement)
+
+            position = frame.endPosition()
         } else {
             if(forceNewLine) {
                 forceNewLine = false
                 forceSpace = false
                 indentNext = true
-                documentChangeObserver.insert(newline)
+                documentChangeObserver.insert(position, newline)
             }
 
             if(forceSpace) {
                 forceSpace = false
-                documentChangeObserver.insert(space)
+                documentChangeObserver.insert(position, space)
             }
 
             if(indentNext) {
                 indentNext = false
-                documentChangeObserver.insert(indentation.repeat(indentLevel))
+                documentChangeObserver.insert(position, indentation.repeat(indentLevel))
             }
 
             documentChangeObserver.edit(frame, frame)
+
+            position = frame.endPosition()
         }
     }
 
@@ -92,19 +107,6 @@ class CodeFormatter(val whiteSpaceTokenId: Int, val documentChangeObserver: Docu
                     }
                 }
             }
-        }
-    }
-
-    companion object {
-        val indentation = "    "
-        val newline = "\n"
-        val space = " "
-
-        val whiteSpaceRegex: Regex = CharSet.chars('\r'.toInt(), '\n'.toInt(), '\t'.toInt(), ' '.toInt()) // TODO other chars.
-
-        fun countNewlines(chs: CharSequence): Int {
-            // TODO others.
-            return chs.count { it == '\n' }
         }
     }
 }
