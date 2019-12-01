@@ -1,11 +1,11 @@
-package at.searles.parsingtools.printer.test
+package at.searles.parsingtools.formatter.test
 
 import at.searles.lexer.Lexer
 import at.searles.lexer.SkipTokenizer
 import at.searles.parsing.*
 import at.searles.parsing.printing.*
-import at.searles.parsingtools.printer.CodeFormatter
-import at.searles.parsingtools.printer.DocumentChangeObserver
+import at.searles.parsingtools.formatter.CodeFormatter
+import at.searles.parsingtools.formatter.EditableStringBuilder
 import at.searles.regexparser.StringToRegex
 import org.junit.Assert
 import org.junit.Before
@@ -24,7 +24,7 @@ class FormatterTest {
         withInput("(a)")
         actFormat()
 
-        Assert.assertEquals("(\n    a\n)", output)
+        Assert.assertEquals("(\n    a\n)", source.toString())
     }
 
     @Test
@@ -36,7 +36,7 @@ class FormatterTest {
         Assert.assertEquals("a (\n" +
                 "    b\n" +
                 ")\n" +
-                "c", output)
+                "c", source.toString())
     }
 
     @Test
@@ -45,7 +45,7 @@ class FormatterTest {
         withInput("( a)")
         actFormat()
 
-        Assert.assertEquals("(\n    a\n)", output)
+        Assert.assertEquals("(\n    a\n)", source.toString())
     }
 
     @Test
@@ -57,7 +57,7 @@ class FormatterTest {
         Assert.assertEquals("a (\n" +
                 "    b\n" +
                 "    c \n" +
-                ")", output)
+                ")", source.toString())
     }
 
     @Test
@@ -95,35 +95,26 @@ class FormatterTest {
                 "    )\n" +
                 "\n" +
                 ")\n" +
-                "\n", output)
+                "\n", source.toString())
     }
 
     private fun withInput(input: String) {
-        this.inStream = ParserStream.fromString(input)
+        this.source = StringBuilder(input)
     }
 
     private fun actFormat() {
-        outStream = StringOutStream()
+        val formatter = CodeFormatter(whiteSpaceTokId, parser)
 
-        val formatter = CodeFormatter(whiteSpaceTokId, DocumentChangeObserver.fromOutStream(outStream))
+        formatter.addIndentAnnotation(Markers.Block)
+        formatter.addForceSpaceAnnotation(Markers.SpaceAfter)
+        formatter.addForceNewlineAnnotation(Markers.NewlineAfter)
 
-        inStream.tokStream().setListener(formatter)
-        inStream.setListener(formatter.createParserStreamListener(
-            setOf(Markers.Block),
-            setOf(Markers.SpaceAfter),
-            setOf(Markers.NewlineAfter)
-
-        ))
-
-        Assert.assertTrue(parser.recognize(inStream))
-        output = outStream.toString()
+        formatter.format(EditableStringBuilder(source))
     }
 
     private var whiteSpaceTokId: Int = Integer.MIN_VALUE // invalid default value.
-    private lateinit var outStream: StringOutStream
-    private lateinit var inStream: ParserStream
+    private lateinit var source: StringBuilder
     private lateinit var parser: Parser<Node>
-    private var output: String? = null
 
     private fun initParser() {
         val lexer = Lexer()
