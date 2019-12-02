@@ -7,7 +7,7 @@ import at.searles.parsing.ParserStream
 import at.searles.parsing.Recognizable
 import java.lang.Integer.max
 
-class CodeFormatter(private val whiteSpaceTokenId: Int, private val parser: Recognizable) {
+open class CodeFormatter(private val whiteSpaceTokenId: Int, private val parser: Recognizable) {
 
     var indentation = "    "
     var newline = "\n"
