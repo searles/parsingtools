@@ -5,7 +5,6 @@ import at.searles.lexer.TokenStream
 import at.searles.parsing.ParserLookaheadException
 import at.searles.parsing.ParserStream
 import at.searles.parsing.Recognizable
-import java.lang.Integer.max
 
 open class CodeFormatter(private val whiteSpaceTokenId: Int, private val parser: Recognizable) {
 
@@ -27,9 +26,12 @@ open class CodeFormatter(private val whiteSpaceTokenId: Int, private val parser:
 
         try {
             parser.recognize(stream)
+            formatterInstance.addWhiteSpaceInsertCommand(true) // for terminating \n etc...
         } catch(e: ParserLookaheadException) {
+            formatterInstance.addWhiteSpaceInsertCommand() // for terminating \n etc...
             // ignore
         }
+
 
         formatterInstance.changeRunnables.reversed().forEach { it.run() }
 
@@ -50,22 +52,38 @@ open class CodeFormatter(private val whiteSpaceTokenId: Int, private val parser:
 
     private inner class FormatterInstance(val editableText: EditableText): TokenStream.Listener, ParserStream.Listener {
         private var indentLevel = 0
-        private var indentNext = false
 
-        private var forceNewLine = false
         private var forceSpace = false
+        private var forceNewLine = false
+        private var forceEmptyLine = false
 
         val changeRunnables = ArrayList<Runnable>()
 
         var position: Long = 0
             private set
 
-        fun forceNewLine() {
-            forceNewLine = true
+        fun addWhiteSpaceInsertCommand(ignoreSpace: Boolean = false) {
+            if(forceEmptyLine) {
+                changeRunnables.add(InsertCommand(editableText, position, newline.repeat(2) + indentation.repeat(indentLevel)))
+            } else if(forceNewLine) {
+                changeRunnables.add(InsertCommand(editableText, position, newline + indentation.repeat(indentLevel)))
+            } else if(forceSpace && !ignoreSpace) {
+                changeRunnables.add(InsertCommand(editableText, position, space))
+            }
+
+            forceSpace = false
+            forceNewLine = false
+            forceEmptyLine = false
         }
 
-        fun forceSpace() {
-            forceSpace = true
+        private fun addDeleteWhiteSpaceCommand(frame: Frame) {
+            when(countNewlines(frame)) {
+                0 -> forceSpace = true
+                1 -> forceNewLine = true
+                else -> forceEmptyLine = true
+            }
+
+            changeRunnables.add(DeleteCommand(editableText, frame.startPosition(), frame.endPosition()))
         }
 
         fun indent() {
@@ -84,57 +102,12 @@ open class CodeFormatter(private val whiteSpaceTokenId: Int, private val parser:
             require(position == frame.startPosition())
 
             if (tokenId == whiteSpaceTokenId) {
-                var nlCount = countNewlines(frame)
-
-                if (forceNewLine) {
-                    nlCount = max(1, nlCount)
-                }
-
-                forceNewLine = false
-                forceSpace = false
-                indentNext = nlCount > 0
-
-                val replacement =
-                    if (nlCount == 0) if (frame.startPosition() == 0L) "" else space else newline.repeat(nlCount)
-
-                val start = frame.startPosition()
-                val end = frame.endPosition()
-
-                changeRunnables.add(Runnable { editableText.replace(start, end, replacement) })
-
-                position = frame.endPosition()
+                addDeleteWhiteSpaceCommand(frame)
             } else {
-                val currentPosition = position
-
-                if (forceNewLine) {
-                    forceNewLine = false
-                    forceSpace = false
-                    indentNext = true
-                    changeRunnables.add(Runnable { editableText.insert(currentPosition, newline) })
-                }
-
-                if (forceSpace) {
-                    forceSpace = false
-                    changeRunnables.add(Runnable { editableText.insert(currentPosition, space) })
-                }
-
-                if (indentNext) {
-                    indentNext = false
-
-                    if(indentLevel > 0) {
-                        val currentIndentation = indentation.repeat(indentLevel)
-
-                        changeRunnables.add(Runnable {
-                            editableText.insert(
-                                currentPosition,
-                                currentIndentation
-                            )
-                        })
-                    }
-                }
-
-                position = frame.endPosition()
+                addWhiteSpaceInsertCommand()
             }
+
+            position = frame.endPosition()
         }
 
         override fun <C : Any> annotationBegin(parserStream: ParserStream, annotation: C) {
@@ -150,13 +123,25 @@ open class CodeFormatter(private val whiteSpaceTokenId: Int, private val parser:
 
             if (success) {
                 if (forceSpaceAnnotations.contains(annotation)) {
-                    forceSpace()
+                    forceSpace = true
                 }
 
                 if (forceNewLineAnnotations.contains(annotation)) {
-                    forceNewLine()
+                    forceNewLine = true
                 }
             }
+        }
+    }
+
+    private class InsertCommand(val editableText: EditableText, val position: Long, val insert: String): Runnable {
+        override fun run() {
+            editableText.insert(position, insert)
+        }
+    }
+
+    private class DeleteCommand(val editableText: EditableText, val start: Long, val end: Long): Runnable {
+        override fun run() {
+            editableText.delete(start, end)
         }
     }
 }

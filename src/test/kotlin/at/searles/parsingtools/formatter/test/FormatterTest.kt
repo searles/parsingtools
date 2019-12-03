@@ -24,7 +24,7 @@ class FormatterTest {
         withInput("(a)")
         actFormat()
 
-        Assert.assertEquals("(\n    a\n)", source.toString())
+        Assert.assertEquals("(\n    a\n)\n", source.toString())
     }
 
     @Test
@@ -40,12 +40,25 @@ class FormatterTest {
     }
 
     @Test
+    fun appFormatStabilityTest() {
+        initParser()
+        withInput("a(b)c")
+        actFormat()
+        actFormat()
+
+        Assert.assertEquals("a (\n" +
+                "    b\n" +
+                ")\n" +
+                "c", source.toString())
+    }
+
+    @Test
     fun constantFormatWithSpaceTest() {
         initParser()
         withInput("( a)")
         actFormat()
 
-        Assert.assertEquals("(\n    a\n)", source.toString())
+        Assert.assertEquals("(\n    a\n)\n", source.toString())
     }
 
     @Test
@@ -56,8 +69,8 @@ class FormatterTest {
 
         Assert.assertEquals("a (\n" +
                 "    b\n" +
-                "    c \n" +
-                ")", source.toString())
+                "    c\n" +
+                ")\n", source.toString())
     }
 
     @Test
@@ -80,20 +93,15 @@ class FormatterTest {
                 "                    l\n" +
                 "                    m n\n" +
                 "                )\n" +
-                "\n" +
                 "            )\n" +
-                "\n" +
                 "        )\n" +
                 "        o\n" +
                 "        p (\n" +
                 "            q r (\n" +
                 "                s t\n" +
                 "            )\n" +
-                "\n" +
                 "        )\n" +
-                "\n" +
                 "    )\n" +
-                "\n" +
                 ")\n" +
                 "\n", source.toString())
     }

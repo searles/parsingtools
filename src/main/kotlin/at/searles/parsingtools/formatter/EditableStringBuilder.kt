@@ -3,8 +3,8 @@ package at.searles.parsingtools.formatter
 import java.lang.StringBuilder
 
 class EditableStringBuilder(val sb: StringBuilder): EditableText {
-    override fun replace(start: Long, end: Long, replacement: CharSequence) {
-        sb.replace(start.toInt(), end.toInt(), replacement.toString())
+    override fun delete(start: Long, end: Long) {
+        sb.delete(start.toInt(), end.toInt())
     }
 
     override fun insert(position: Long, insertion: CharSequence) {
