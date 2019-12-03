@@ -42,14 +42,14 @@ class FormatterTest {
     @Test
     fun appFormatStabilityTest() {
         initParser()
-        withInput("a(b)c")
+        withInput("(a)")
+        actFormat()
         actFormat()
         actFormat()
 
-        Assert.assertEquals("a (\n" +
-                "    b\n" +
-                ")\n" +
-                "c", source.toString())
+        Assert.assertEquals("(\n" +
+                "    a\n" +
+                ")\n", source.toString())
     }
 
     @Test
