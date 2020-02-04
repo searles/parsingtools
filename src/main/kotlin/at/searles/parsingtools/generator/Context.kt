@@ -20,6 +20,10 @@ class Context(val tokenizer: Tokenizer) {
             override fun left(result: T): CharSequence? {
                 return result.toString()
             }
+
+            override fun toString(): String {
+                return regex.toString()
+            }
         })
     }
 
