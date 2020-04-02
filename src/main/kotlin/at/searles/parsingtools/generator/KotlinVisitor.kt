@@ -61,7 +61,7 @@ import at.searles.regex.Regex
 
     override fun visit(node: Generator.ParserRuleNode): String {
         if(node.lhs.type == null) {
-            return "    val ${node.lhs.name} = ${node.rhs.accept(this)}.ref(${node.lhs.name})"
+            return "    val ${node.lhs.name} = ${node.rhs.accept(this)}.ref(\"${node.lhs.name}\")"
         }
 
         // typed ones are defined before as Refs
